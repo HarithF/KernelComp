@@ -1,0 +1,1055 @@
+plugin compile;
+plugin mem;
+import compile;
+plugin core;
+plugin math;
+plugin affine;
+import mem;
+import core;
+plugin refly;
+plugin vec;
+plugin tensor;
+plugin tuple;
+plugin cps;
+plugin buffer;
+plugin matrix;
+Sigma %tensor.Ring_14170: □, 4<TODO>, <TODO>, <TODO>, <TODO> = {
+    *, T_14172, «2; T_14172» → T_14172, «2; T_14172» → T_14172
+};
+fun extern VGG16 (): [%mem.M 0, «10; «1000; %math.F (23, 8)»»] =
+    let _19340: Nat = %core.nat.add (Ro_19336, Rr_19338);
+    let _14502: Nat = %core.nat.add (Ro_14490, Rr_14491);
+    let _33207: Bool = %vec.is_unique Bool 1 is_33206;
+    let _33209: Nat = %refly.check Nat 30 (_33207, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let _23178: Bool = %vec.is_unique (Idx n_23163) m_23165 is_23170;
+    let _23179: Nat = %core.nat.sub _23162;
+    let _23181: Nat = %refly.check Nat 30 (_23178, _23179, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let _8053: Bool = %vec.is_unique (Idx n_8011) m_8012 is_8034;
+    let _8054: Nat = %core.nat.sub _8004;
+    let _8075: Nat = %refly.check Nat 30 (_8053, _8054, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_48167: Nat = %vec.diff Nat (2, 1) (s1_48155, tt);
+    let s2_res_48169: Nat = %vec.diff Nat (2, 1) (s2_48160, ff);
+    let _48108: Bool = %vec.is_unique Bool 1 c1_48106;
+    let n_48110: Nat = %refly.check Nat 30 (_48108, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let _48114: Bool = %vec.is_unique Bool 1 c2_48112;
+    let m_48116: Nat = %refly.check Nat 30 (_48114, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_48118: Nat = %core.nat.add (n_48110, m_48116);
+    let _7977: Nat = %core.nat.add _7933;
+    let s1_res_48125: «n_48110; Nat» = %vec.diff Nat (2, 1) (s1_48093, c1_48106);
+    let s2_res_48127: «m_48116; Nat» = %vec.diff Nat (2, 1) (s2_48098, c2_48112);
+    let s12_res_48139: «m_48118; Nat» = %vec.cat (n_48110, m_48116) Nat (s1_res_48125, s2_res_48127);
+    let m_48012: Nat = %core.nat.add _47981;
+    let bc_1_48019: «m_48012; Bool» = %vec.cat (nb_47984, nc_47982) Bool (b1_48003, c1_48004);
+    let _48022: Bool = %vec.is_unique Bool m_48012 bc_1_48019;
+    let _48024: Nat = %core.nat.sub (2, m_48012);
+    let n_48026: Nat = %refly.check Nat 30 (_48022, _48024, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_48030: «m_48012; Bool» = %vec.cat (nb_47984, nc_47982) Bool (b2_48027, c2_48028);
+    let _48031: Bool = %vec.is_unique Bool m_48012 bc_2_48030;
+    let m_48033: Nat = %refly.check Nat 30 (_48031, _48024, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_48035: Nat = %core.nat.add (n_48026, m_48033);
+    let _48079: Nat = %core.nat.add (m_48035, nb_47984);
+    let _48051: Bool = %vec.is_unique Bool m_48012 is_48050;
+    let _48053: Nat = %refly.check Nat 30 (_48051, _48024, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_48056: «n_48026; Nat» = %vec.diff Nat (2, m_48012) (s1_47989, bc_1_48019);
+    let s2_res_48058: «m_48033; Nat» = %vec.diff Nat (2, m_48012) (s2_47994, bc_2_48030);
+    let s12_res_48070: «m_48035; Nat» = %vec.cat (n_48026, m_48033) Nat (s1_res_48056, s2_res_48058);
+    let s_out_48086: «_48079; Nat» = %vec.cat (nb_47984, m_48035) Nat (bs_48038, s12_res_48070);
+    let m_47874: Nat = %core.nat.add _47839;
+    let bc_1_47881: «m_47874; Idx r1_47842» = %vec.cat (nb_47848, nc_47840) (Idx r1_47842) (b1_47865, c1_47866);
+    let _47889: Bool = %vec.is_unique (Idx r1_47842) m_47874 bc_1_47881;
+    let _47891: Nat = %core.nat.sub (r1_47842, m_47874);
+    let n_47893: Nat = %refly.check Nat 30 (_47889, _47891, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_47901: «m_47874; Idx r2_47845» = %vec.cat (nb_47848, nc_47840) (Idx r2_47845) (b2_47895, c2_47896);
+    let _47909: Bool = %vec.is_unique (Idx r2_47845) m_47874 bc_2_47901;
+    let _47911: Nat = %core.nat.sub (r2_47845, m_47874);
+    let m_47913: Nat = %refly.check Nat 30 (_47909, _47911, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_47915: Nat = %core.nat.add (n_47893, m_47913);
+    let _47968: Nat = %core.nat.add (m_47915, nb_47848);
+    let _47931: Bool = %vec.is_unique (Idx r1_47842) m_47874 is_47930;
+    let _47933: Nat = %refly.check Nat 30 (_47931, _47891, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_47936: «n_47893; Nat» = %vec.diff Nat (r1_47842, m_47874) (s1_47857, bc_1_47881);
+    let _47942: Bool = %vec.is_unique (Idx r2_47845) m_47874 is_47941;
+    let _47944: Nat = %refly.check Nat 30 (_47942, _47911, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s2_res_47947: «m_47913; Nat» = %vec.diff Nat (r2_47845, m_47874) (s2_47859, bc_2_47901);
+    let s12_res_47959: «m_47915; Nat» = %vec.cat (n_47893, m_47913) Nat (s1_res_47936, s2_res_47947);
+    let s_out_47975: «_47968; Nat» = %vec.cat (nb_47848, m_47915) Nat (bs_47918, s12_res_47959);
+    let m_24036: Nat = %core.nat.add _23584;
+    let bc_1_24043: «m_24036; Idx r1_23573» = %vec.cat (nb_23592, nc_23591) (Idx r1_23573) (b1_23622, c1_23620);
+    let _24051: Bool = %vec.is_unique (Idx r1_23573) m_24036 bc_1_24043;
+    let _24053: Nat = %core.nat.sub (r1_23573, m_24036);
+    let n_24055: Nat = %refly.check Nat 30 (_24051, _24053, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_24061: «m_24036; Idx r2_23574» = %vec.cat (nb_23592, nc_23591) (Idx r2_23574) (b2_23623, c2_23621);
+    let _24069: Bool = %vec.is_unique (Idx r2_23574) m_24036 bc_2_24061;
+    let _24071: Nat = %core.nat.sub (r2_23574, m_24036);
+    let m_24073: Nat = %refly.check Nat 30 (_24069, _24071, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_24075: Nat = %core.nat.add (n_24055, m_24073);
+    let _24077: Nat = %core.nat.add (m_24075, nb_23592);
+    let _24099: Bool = %vec.is_unique (Idx r1_23573) m_24036 is_24098;
+    let _24101: Nat = %refly.check Nat 30 (_24099, _24053, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_24148: «n_24055; Nat» = %vec.diff Nat (r1_23573, m_24036) (s1_23643, bc_1_24043);
+    let _24111: Bool = %vec.is_unique (Idx r2_23574) m_24036 is_24110;
+    let _24113: Nat = %refly.check Nat 30 (_24111, _24071, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s2_res_24150: «m_24073; Nat» = %vec.diff Nat (r2_23574, m_24036) (s2_23644, bc_2_24061);
+    let s12_res_24152: «m_24075; Nat» = %vec.cat (n_24055, m_24073) Nat (s1_res_24148, s2_res_24150);
+    let s_out_24154: «_24077; Nat» = %vec.cat (nb_23592, m_24075) Nat (bs_24143, s12_res_24152);
+    let _15741: Nat = %core.nat.add (Ro_15737, Rr_15739);
+    let s1_res_47705: Nat = %vec.diff Nat (2, 1) (s1_47693, tt);
+    let s2_res_47707: Nat = %vec.diff Nat (2, 1) (s2_47698, ff);
+    let _47646: Bool = %vec.is_unique Bool 1 c1_47644;
+    let n_47648: Nat = %refly.check Nat 30 (_47646, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let _47652: Bool = %vec.is_unique Bool 1 c2_47650;
+    let m_47654: Nat = %refly.check Nat 30 (_47652, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_47656: Nat = %core.nat.add (n_47648, m_47654);
+    let s1_res_47663: «n_47648; Nat» = %vec.diff Nat (2, 1) (s1_47631, c1_47644);
+    let s2_res_47665: «m_47654; Nat» = %vec.diff Nat (2, 1) (s2_47636, c2_47650);
+    let s12_res_47677: «m_47656; Nat» = %vec.cat (n_47648, m_47654) Nat (s1_res_47663, s2_res_47665);
+    let m_47550: Nat = %core.nat.add _47519;
+    let bc_1_47557: «m_47550; Bool» = %vec.cat (nb_47522, nc_47520) Bool (b1_47541, c1_47542);
+    let _47560: Bool = %vec.is_unique Bool m_47550 bc_1_47557;
+    let _47562: Nat = %core.nat.sub (2, m_47550);
+    let n_47564: Nat = %refly.check Nat 30 (_47560, _47562, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_47568: «m_47550; Bool» = %vec.cat (nb_47522, nc_47520) Bool (b2_47565, c2_47566);
+    let _47569: Bool = %vec.is_unique Bool m_47550 bc_2_47568;
+    let m_47571: Nat = %refly.check Nat 30 (_47569, _47562, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_47573: Nat = %core.nat.add (n_47564, m_47571);
+    let _47617: Nat = %core.nat.add (m_47573, nb_47522);
+    let _47589: Bool = %vec.is_unique Bool m_47550 is_47588;
+    let _47591: Nat = %refly.check Nat 30 (_47589, _47562, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_47594: «n_47564; Nat» = %vec.diff Nat (2, m_47550) (s1_47527, bc_1_47557);
+    let s2_res_47596: «m_47571; Nat» = %vec.diff Nat (2, m_47550) (s2_47532, bc_2_47568);
+    let s12_res_47608: «m_47573; Nat» = %vec.cat (n_47564, m_47571) Nat (s1_res_47594, s2_res_47596);
+    let s_out_47624: «_47617; Nat» = %vec.cat (nb_47522, m_47573) Nat (bs_47576, s12_res_47608);
+    let m_47412: Nat = %core.nat.add _47377;
+    let bc_1_47419: «m_47412; Idx r1_47380» = %vec.cat (nb_47386, nc_47378) (Idx r1_47380) (b1_47403, c1_47404);
+    let _47427: Bool = %vec.is_unique (Idx r1_47380) m_47412 bc_1_47419;
+    let _47429: Nat = %core.nat.sub (r1_47380, m_47412);
+    let n_47431: Nat = %refly.check Nat 30 (_47427, _47429, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_47439: «m_47412; Idx r2_47383» = %vec.cat (nb_47386, nc_47378) (Idx r2_47383) (b2_47433, c2_47434);
+    let _47447: Bool = %vec.is_unique (Idx r2_47383) m_47412 bc_2_47439;
+    let _47449: Nat = %core.nat.sub (r2_47383, m_47412);
+    let m_47451: Nat = %refly.check Nat 30 (_47447, _47449, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_47453: Nat = %core.nat.add (n_47431, m_47451);
+    let _47506: Nat = %core.nat.add (m_47453, nb_47386);
+    let _47469: Bool = %vec.is_unique (Idx r1_47380) m_47412 is_47468;
+    let _47471: Nat = %refly.check Nat 30 (_47469, _47429, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_47474: «n_47431; Nat» = %vec.diff Nat (r1_47380, m_47412) (s1_47395, bc_1_47419);
+    let _47480: Bool = %vec.is_unique (Idx r2_47383) m_47412 is_47479;
+    let _47482: Nat = %refly.check Nat 30 (_47480, _47449, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s2_res_47485: «m_47451; Nat» = %vec.diff Nat (r2_47383, m_47412) (s2_47397, bc_2_47439);
+    let s12_res_47497: «m_47453; Nat» = %vec.cat (n_47431, m_47451) Nat (s1_res_47474, s2_res_47485);
+    let s_out_47513: «_47506; Nat» = %vec.cat (nb_47386, m_47453) Nat (bs_47456, s12_res_47497);
+    let s1_res_47131: Nat = %vec.diff Nat (2, 1) (s1_47119, tt);
+    let s2_res_47133: Nat = %vec.diff Nat (2, 1) (s2_47124, ff);
+    let _47072: Bool = %vec.is_unique Bool 1 c1_47070;
+    let n_47074: Nat = %refly.check Nat 30 (_47072, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let _47078: Bool = %vec.is_unique Bool 1 c2_47076;
+    let m_47080: Nat = %refly.check Nat 30 (_47078, 1, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_47082: Nat = %core.nat.add (n_47074, m_47080);
+    let s1_res_47089: «n_47074; Nat» = %vec.diff Nat (2, 1) (s1_47057, c1_47070);
+    let s2_res_47091: «m_47080; Nat» = %vec.diff Nat (2, 1) (s2_47062, c2_47076);
+    let s12_res_47103: «m_47082; Nat» = %vec.cat (n_47074, m_47080) Nat (s1_res_47089, s2_res_47091);
+    let m_46976: Nat = %core.nat.add _46945;
+    let bc_1_46983: «m_46976; Bool» = %vec.cat (nb_46948, nc_46946) Bool (b1_46967, c1_46968);
+    let _46986: Bool = %vec.is_unique Bool m_46976 bc_1_46983;
+    let _46988: Nat = %core.nat.sub (2, m_46976);
+    let n_46990: Nat = %refly.check Nat 30 (_46986, _46988, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_46994: «m_46976; Bool» = %vec.cat (nb_46948, nc_46946) Bool (b2_46991, c2_46992);
+    let _46995: Bool = %vec.is_unique Bool m_46976 bc_2_46994;
+    let m_46997: Nat = %refly.check Nat 30 (_46995, _46988, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_46999: Nat = %core.nat.add (n_46990, m_46997);
+    let _47043: Nat = %core.nat.add (m_46999, nb_46948);
+    let _47015: Bool = %vec.is_unique Bool m_46976 is_47014;
+    let _47017: Nat = %refly.check Nat 30 (_47015, _46988, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_47020: «n_46990; Nat» = %vec.diff Nat (2, m_46976) (s1_46953, bc_1_46983);
+    let s2_res_47022: «m_46997; Nat» = %vec.diff Nat (2, m_46976) (s2_46958, bc_2_46994);
+    let s12_res_47034: «m_46999; Nat» = %vec.cat (n_46990, m_46997) Nat (s1_res_47020, s2_res_47022);
+    let s_out_47050: «_47043; Nat» = %vec.cat (nb_46948, m_46999) Nat (bs_47002, s12_res_47034);
+    let m_46838: Nat = %core.nat.add _46803;
+    let bc_1_46845: «m_46838; Idx r1_46806» = %vec.cat (nb_46812, nc_46804) (Idx r1_46806) (b1_46829, c1_46830);
+    let _46853: Bool = %vec.is_unique (Idx r1_46806) m_46838 bc_1_46845;
+    let _46855: Nat = %core.nat.sub (r1_46806, m_46838);
+    let n_46857: Nat = %refly.check Nat 30 (_46853, _46855, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let bc_2_46865: «m_46838; Idx r2_46809» = %vec.cat (nb_46812, nc_46804) (Idx r2_46809) (b2_46859, c2_46860);
+    let _46873: Bool = %vec.is_unique (Idx r2_46809) m_46838 bc_2_46865;
+    let _46875: Nat = %core.nat.sub (r2_46809, m_46838);
+    let m_46877: Nat = %refly.check Nat 30 (_46873, _46875, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let m_46879: Nat = %core.nat.add (n_46857, m_46877);
+    let _46932: Nat = %core.nat.add (m_46879, nb_46812);
+    let _46895: Bool = %vec.is_unique (Idx r1_46806) m_46838 is_46894;
+    let _46897: Nat = %refly.check Nat 30 (_46895, _46855, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s1_res_46900: «n_46857; Nat» = %vec.diff Nat (r1_46806, m_46838) (s1_46821, bc_1_46845);
+    let _46906: Bool = %vec.is_unique (Idx r2_46809) m_46838 is_46905;
+    let _46908: Nat = %refly.check Nat 30 (_46906, _46875, (103I8, 105I8, 118I8, 101I8, 110I8, 32I8, 105I8, 110I8, 100I8, 105I8, 99I8, 101I8, 115I8, 32I8, 97I8, 114I8, 101I8, 32I8, 110I8, 111I8, 116I8, 32I8, 100I8, 105I8, 115I8, 116I8, 105I8, 110I8, 99I8, 116I8));
+    let s2_res_46911: «m_46877; Nat» = %vec.diff Nat (r2_46809, m_46838) (s2_46823, bc_2_46865);
+    let s12_res_46923: «m_46879; Nat» = %vec.cat (n_46857, m_46877) Nat (s1_res_46900, s2_res_46911);
+    let s_out_46939: «_46932; Nat» = %vec.cat (nb_46812, m_46879) Nat (bs_46882, s12_res_46923);
+    let _46516: Nat = %core.nat.mul (2, padding_46513#ff);
+    let _46519: Nat = %core.nat.add (16, _46516);
+    let _46523: Nat = %core.nat.mul (2, dilation_46520#ff);
+    let _46525: Nat = %core.nat.add (1, _46523);
+    let _46527: Nat = %core.nat.sub (_46519, _46525);
+    let _46531: Nat = %core.nat.div (_46527, stride_46528#ff);
+    let _46533: Nat = %core.nat.add (1, _46531);
+    let _46536: Nat = %core.nat.mul (2, padding_46513#tt);
+    let _46539: Nat = %core.nat.add (16, _46536);
+    let _46542: Nat = %core.nat.mul (2, dilation_46520#tt);
+    let _46544: Nat = %core.nat.add (1, _46542);
+    let _46546: Nat = %core.nat.sub (_46539, _46544);
+    let _46549: Nat = %core.nat.div (_46546, stride_46528#tt);
+    let _46551: Nat = %core.nat.add (1, _46549);
+    let _46467: Nat = %core.nat.mul (2, padding_46464#ff);
+    let _46469: Nat = %core.nat.add (_46467, h_46449);
+    let _46471: Nat = %core.nat.sub (kh_46456, 1);
+    let _46475: Nat = %core.nat.mul (_46471, dilation_46472#ff);
+    let _46477: Nat = %core.nat.add (1, _46475);
+    let _46479: Nat = %core.nat.sub (_46469, _46477);
+    let _46483: Nat = %core.nat.div (_46479, stride_46480#ff);
+    let _46485: Nat = %core.nat.add (1, _46483);
+    let _46488: Nat = %core.nat.mul (2, padding_46464#tt);
+    let _46490: Nat = %core.nat.add (_46488, w_46450);
+    let _46492: Nat = %core.nat.sub (kw_46457, 1);
+    let _46495: Nat = %core.nat.mul (_46492, dilation_46472#tt);
+    let _46497: Nat = %core.nat.add (1, _46495);
+    let _46499: Nat = %core.nat.sub (_46490, _46497);
+    let _46502: Nat = %core.nat.div (_46499, stride_46480#tt);
+    let _46504: Nat = %core.nat.add (1, _46502);
+    let _18506: Nat = %core.nat.mul (2, padding_18472#ff);
+    let _18508: Nat = %core.nat.add (_18506, h_18447);
+    let _18510: Nat = %core.nat.sub (kh_18449, 1);
+    let _18513: Nat = %core.nat.mul (_18510, dilation_18471#ff);
+    let _18515: Nat = %core.nat.add (1, _18513);
+    let _18517: Nat = %core.nat.sub (_18508, _18515);
+    let _18520: Nat = %core.nat.div (_18517, stride_18470#ff);
+    let _18522: Nat = %core.nat.add (1, _18520);
+    let _18525: Nat = %core.nat.mul (2, padding_18472#tt);
+    let _18527: Nat = %core.nat.add (_18525, w_18448);
+    let _18529: Nat = %core.nat.sub (kw_18450, 1);
+    let _18532: Nat = %core.nat.mul (_18529, dilation_18471#tt);
+    let _18534: Nat = %core.nat.add (1, _18532);
+    let _18536: Nat = %core.nat.sub (_18527, _18534);
+    let _18539: Nat = %core.nat.div (_18536, stride_18470#tt);
+    let _18541: Nat = %core.nat.add (1, _18539);
+    let _45891: Nat = %core.nat.add (10, lo_45888#0₄);
+    let _45895: Nat = %core.nat.add (_45891, hi_45892#0₄);
+    let _45898: Nat = %core.nat.add (512, lo_45888#1₄);
+    let _45901: Nat = %core.nat.add (_45898, hi_45892#1₄);
+    let _45904: Nat = %core.nat.add (14, lo_45888#2₄);
+    let _45907: Nat = %core.nat.add (_45904, hi_45892#2₄);
+    let _45910: Nat = %core.nat.add (14, lo_45888#3₄);
+    let _45913: Nat = %core.nat.add (_45910, hi_45892#3₄);
+    let _42817: Nat = %core.nat.add (_42810, lo_42814#0₄);
+    let _42821: Nat = %core.nat.add (_42817, hi_42818#0₄);
+    let _42824: Nat = %core.nat.add (_42802, lo_42814#1₄);
+    let _42827: Nat = %core.nat.add (_42824, hi_42818#1₄);
+    let _42830: Nat = %core.nat.add (_42803, lo_42814#2₄);
+    let _42833: Nat = %core.nat.add (_42830, hi_42818#2₄);
+    let _42836: Nat = %core.nat.add (_42804, lo_42814#3₄);
+    let _42839: Nat = %core.nat.add (_42836, hi_42818#3₄);
+    let _17532: Nat = %core.nat.add (s_in_17456#d_17527, lo_17482#d_17527);
+    let _17535: Nat = %core.nat.add (_17532, hi_17483#d_17527);
+    let _46316: Nat = %core.nat.mul (2, padding_46313#ff);
+    let _46319: Nat = %core.nat.add (16, _46316);
+    let _46323: Nat = %core.nat.mul (2, dilation_46320#ff);
+    let _46325: Nat = %core.nat.add (1, _46323);
+    let _46327: Nat = %core.nat.sub (_46319, _46325);
+    let _46331: Nat = %core.nat.div (_46327, stride_46328#ff);
+    let _46333: Nat = %core.nat.add (1, _46331);
+    let _46336: Nat = %core.nat.mul (2, padding_46313#tt);
+    let _46339: Nat = %core.nat.add (16, _46336);
+    let _46342: Nat = %core.nat.mul (2, dilation_46320#tt);
+    let _46344: Nat = %core.nat.add (1, _46342);
+    let _46346: Nat = %core.nat.sub (_46339, _46344);
+    let _46349: Nat = %core.nat.div (_46346, stride_46328#tt);
+    let _46351: Nat = %core.nat.add (1, _46349);
+    let _46267: Nat = %core.nat.mul (2, padding_46264#ff);
+    let _46269: Nat = %core.nat.add (_46267, h_46249);
+    let _46271: Nat = %core.nat.sub (kh_46256, 1);
+    let _46275: Nat = %core.nat.mul (_46271, dilation_46272#ff);
+    let _46277: Nat = %core.nat.add (1, _46275);
+    let _46279: Nat = %core.nat.sub (_46269, _46277);
+    let _46283: Nat = %core.nat.div (_46279, stride_46280#ff);
+    let _46285: Nat = %core.nat.add (1, _46283);
+    let _46288: Nat = %core.nat.mul (2, padding_46264#tt);
+    let _46290: Nat = %core.nat.add (_46288, w_46250);
+    let _46292: Nat = %core.nat.sub (kw_46257, 1);
+    let _46295: Nat = %core.nat.mul (_46292, dilation_46272#tt);
+    let _46297: Nat = %core.nat.add (1, _46295);
+    let _46299: Nat = %core.nat.sub (_46290, _46297);
+    let _46302: Nat = %core.nat.div (_46299, stride_46280#tt);
+    let _46304: Nat = %core.nat.add (1, _46302);
+    let _46064: Nat = %core.nat.mul (2, padding_46061#ff);
+    let _46067: Nat = %core.nat.add (16, _46064);
+    let _46071: Nat = %core.nat.mul (2, dilation_46068#ff);
+    let _46073: Nat = %core.nat.add (1, _46071);
+    let _46075: Nat = %core.nat.sub (_46067, _46073);
+    let _46079: Nat = %core.nat.div (_46075, stride_46076#ff);
+    let _46081: Nat = %core.nat.add (1, _46079);
+    let _46084: Nat = %core.nat.mul (2, padding_46061#tt);
+    let _46087: Nat = %core.nat.add (16, _46084);
+    let _46090: Nat = %core.nat.mul (2, dilation_46068#tt);
+    let _46092: Nat = %core.nat.add (1, _46090);
+    let _46094: Nat = %core.nat.sub (_46087, _46092);
+    let _46097: Nat = %core.nat.div (_46094, stride_46076#tt);
+    let _46099: Nat = %core.nat.add (1, _46097);
+    let _46013: Nat = %core.nat.mul (2, padding_46010#ff);
+    let _46015: Nat = %core.nat.add (_46013, h_45995);
+    let _46017: Nat = %core.nat.sub (kh_46002, 1);
+    let _46021: Nat = %core.nat.mul (_46017, dilation_46018#ff);
+    let _46023: Nat = %core.nat.add (1, _46021);
+    let _46025: Nat = %core.nat.sub (_46015, _46023);
+    let _46029: Nat = %core.nat.div (_46025, stride_46026#ff);
+    let _46031: Nat = %core.nat.add (1, _46029);
+    let _46034: Nat = %core.nat.mul (2, padding_46010#tt);
+    let _46036: Nat = %core.nat.add (_46034, w_45996);
+    let _46038: Nat = %core.nat.sub (kw_46003, 1);
+    let _46041: Nat = %core.nat.mul (_46038, dilation_46018#tt);
+    let _46043: Nat = %core.nat.add (1, _46041);
+    let _46045: Nat = %core.nat.sub (_46036, _46043);
+    let _46048: Nat = %core.nat.div (_46045, stride_46026#tt);
+    let _46050: Nat = %core.nat.add (1, _46048);
+    let _45751: Nat = %core.nat.mul (2, padding_45748#ff);
+    let _45754: Nat = %core.nat.add (30, _45751);
+    let _45758: Nat = %core.nat.mul (2, dilation_45755#ff);
+    let _45760: Nat = %core.nat.add (1, _45758);
+    let _45762: Nat = %core.nat.sub (_45754, _45760);
+    let _45766: Nat = %core.nat.div (_45762, stride_45763#ff);
+    let _45768: Nat = %core.nat.add (1, _45766);
+    let _45771: Nat = %core.nat.mul (2, padding_45748#tt);
+    let _45774: Nat = %core.nat.add (30, _45771);
+    let _45777: Nat = %core.nat.mul (2, dilation_45755#tt);
+    let _45779: Nat = %core.nat.add (1, _45777);
+    let _45781: Nat = %core.nat.sub (_45774, _45779);
+    let _45784: Nat = %core.nat.div (_45781, stride_45763#tt);
+    let _45786: Nat = %core.nat.add (1, _45784);
+    let _45702: Nat = %core.nat.mul (2, padding_45699#ff);
+    let _45704: Nat = %core.nat.add (_45702, h_45684);
+    let _45706: Nat = %core.nat.sub (kh_45691, 1);
+    let _45710: Nat = %core.nat.mul (_45706, dilation_45707#ff);
+    let _45712: Nat = %core.nat.add (1, _45710);
+    let _45714: Nat = %core.nat.sub (_45704, _45712);
+    let _45718: Nat = %core.nat.div (_45714, stride_45715#ff);
+    let _45720: Nat = %core.nat.add (1, _45718);
+    let _45723: Nat = %core.nat.mul (2, padding_45699#tt);
+    let _45725: Nat = %core.nat.add (_45723, w_45685);
+    let _45727: Nat = %core.nat.sub (kw_45692, 1);
+    let _45730: Nat = %core.nat.mul (_45727, dilation_45707#tt);
+    let _45732: Nat = %core.nat.add (1, _45730);
+    let _45734: Nat = %core.nat.sub (_45725, _45732);
+    let _45737: Nat = %core.nat.div (_45734, stride_45715#tt);
+    let _45739: Nat = %core.nat.add (1, _45737);
+    let _45404: Nat = %core.nat.add (10, lo_45401#0₄);
+    let _45408: Nat = %core.nat.add (_45404, hi_45405#0₄);
+    let _45411: Nat = %core.nat.add (512, lo_45401#1₄);
+    let _45414: Nat = %core.nat.add (_45411, hi_45405#1₄);
+    let _45417: Nat = %core.nat.add (28, lo_45401#2₄);
+    let _45420: Nat = %core.nat.add (_45417, hi_45405#2₄);
+    let _45423: Nat = %core.nat.add (28, lo_45401#3₄);
+    let _45426: Nat = %core.nat.add (_45423, hi_45405#3₄);
+    let _45550: Nat = %core.nat.mul (2, padding_45547#ff);
+    let _45553: Nat = %core.nat.add (30, _45550);
+    let _45557: Nat = %core.nat.mul (2, dilation_45554#ff);
+    let _45559: Nat = %core.nat.add (1, _45557);
+    let _45561: Nat = %core.nat.sub (_45553, _45559);
+    let _45565: Nat = %core.nat.div (_45561, stride_45562#ff);
+    let _45567: Nat = %core.nat.add (1, _45565);
+    let _45570: Nat = %core.nat.mul (2, padding_45547#tt);
+    let _45573: Nat = %core.nat.add (30, _45570);
+    let _45576: Nat = %core.nat.mul (2, dilation_45554#tt);
+    let _45578: Nat = %core.nat.add (1, _45576);
+    let _45580: Nat = %core.nat.sub (_45573, _45578);
+    let _45583: Nat = %core.nat.div (_45580, stride_45562#tt);
+    let _45585: Nat = %core.nat.add (1, _45583);
+    let _45499: Nat = %core.nat.mul (2, padding_45496#ff);
+    let _45501: Nat = %core.nat.add (_45499, h_45481);
+    let _45503: Nat = %core.nat.sub (kh_45488, 1);
+    let _45507: Nat = %core.nat.mul (_45503, dilation_45504#ff);
+    let _45509: Nat = %core.nat.add (1, _45507);
+    let _45511: Nat = %core.nat.sub (_45501, _45509);
+    let _45515: Nat = %core.nat.div (_45511, stride_45512#ff);
+    let _45517: Nat = %core.nat.add (1, _45515);
+    let _45520: Nat = %core.nat.mul (2, padding_45496#tt);
+    let _45522: Nat = %core.nat.add (_45520, w_45482);
+    let _45524: Nat = %core.nat.sub (kw_45489, 1);
+    let _45527: Nat = %core.nat.mul (_45524, dilation_45504#tt);
+    let _45529: Nat = %core.nat.add (1, _45527);
+    let _45531: Nat = %core.nat.sub (_45522, _45529);
+    let _45534: Nat = %core.nat.div (_45531, stride_45512#tt);
+    let _45536: Nat = %core.nat.add (1, _45534);
+    let _45256: Nat = %core.nat.mul (2, padding_45253#ff);
+    let _45259: Nat = %core.nat.add (30, _45256);
+    let _45263: Nat = %core.nat.mul (2, dilation_45260#ff);
+    let _45265: Nat = %core.nat.add (1, _45263);
+    let _45267: Nat = %core.nat.sub (_45259, _45265);
+    let _45271: Nat = %core.nat.div (_45267, stride_45268#ff);
+    let _45273: Nat = %core.nat.add (1, _45271);
+    let _45276: Nat = %core.nat.mul (2, padding_45253#tt);
+    let _45279: Nat = %core.nat.add (30, _45276);
+    let _45282: Nat = %core.nat.mul (2, dilation_45260#tt);
+    let _45284: Nat = %core.nat.add (1, _45282);
+    let _45286: Nat = %core.nat.sub (_45279, _45284);
+    let _45289: Nat = %core.nat.div (_45286, stride_45268#tt);
+    let _45291: Nat = %core.nat.add (1, _45289);
+    let _45205: Nat = %core.nat.mul (2, padding_45202#ff);
+    let _45207: Nat = %core.nat.add (_45205, h_45187);
+    let _45209: Nat = %core.nat.sub (kh_45194, 1);
+    let _45213: Nat = %core.nat.mul (_45209, dilation_45210#ff);
+    let _45215: Nat = %core.nat.add (1, _45213);
+    let _45217: Nat = %core.nat.sub (_45207, _45215);
+    let _45221: Nat = %core.nat.div (_45217, stride_45218#ff);
+    let _45223: Nat = %core.nat.add (1, _45221);
+    let _45226: Nat = %core.nat.mul (2, padding_45202#tt);
+    let _45228: Nat = %core.nat.add (_45226, w_45188);
+    let _45230: Nat = %core.nat.sub (kw_45195, 1);
+    let _45233: Nat = %core.nat.mul (_45230, dilation_45210#tt);
+    let _45235: Nat = %core.nat.add (1, _45233);
+    let _45237: Nat = %core.nat.sub (_45228, _45235);
+    let _45240: Nat = %core.nat.div (_45237, stride_45218#tt);
+    let _45242: Nat = %core.nat.add (1, _45240);
+    let _45076: Nat = %core.nat.add (10, lo_45073#0₄);
+    let _45080: Nat = %core.nat.add (_45076, hi_45077#0₄);
+    let _45083: Nat = %core.nat.add (i8, lo_45073#1₄);
+    let _45086: Nat = %core.nat.add (_45083, hi_45077#1₄);
+    let _45089: Nat = %core.nat.add (28, lo_45073#2₄);
+    let _45092: Nat = %core.nat.add (_45089, hi_45077#2₄);
+    let _45095: Nat = %core.nat.add (28, lo_45073#3₄);
+    let _45098: Nat = %core.nat.add (_45095, hi_45077#3₄);
+    let _44937: Nat = %core.nat.mul (2, padding_44934#ff);
+    let _44940: Nat = %core.nat.add (58, _44937);
+    let _44944: Nat = %core.nat.mul (2, dilation_44941#ff);
+    let _44946: Nat = %core.nat.add (1, _44944);
+    let _44948: Nat = %core.nat.sub (_44940, _44946);
+    let _44952: Nat = %core.nat.div (_44948, stride_44949#ff);
+    let _44954: Nat = %core.nat.add (1, _44952);
+    let _44957: Nat = %core.nat.mul (2, padding_44934#tt);
+    let _44960: Nat = %core.nat.add (58, _44957);
+    let _44963: Nat = %core.nat.mul (2, dilation_44941#tt);
+    let _44965: Nat = %core.nat.add (1, _44963);
+    let _44967: Nat = %core.nat.sub (_44960, _44965);
+    let _44970: Nat = %core.nat.div (_44967, stride_44949#tt);
+    let _44972: Nat = %core.nat.add (1, _44970);
+    let _44888: Nat = %core.nat.mul (2, padding_44885#ff);
+    let _44890: Nat = %core.nat.add (_44888, h_44870);
+    let _44892: Nat = %core.nat.sub (kh_44877, 1);
+    let _44896: Nat = %core.nat.mul (_44892, dilation_44893#ff);
+    let _44898: Nat = %core.nat.add (1, _44896);
+    let _44900: Nat = %core.nat.sub (_44890, _44898);
+    let _44904: Nat = %core.nat.div (_44900, stride_44901#ff);
+    let _44906: Nat = %core.nat.add (1, _44904);
+    let _44909: Nat = %core.nat.mul (2, padding_44885#tt);
+    let _44911: Nat = %core.nat.add (_44909, w_44871);
+    let _44913: Nat = %core.nat.sub (kw_44878, 1);
+    let _44916: Nat = %core.nat.mul (_44913, dilation_44893#tt);
+    let _44918: Nat = %core.nat.add (1, _44916);
+    let _44920: Nat = %core.nat.sub (_44911, _44918);
+    let _44923: Nat = %core.nat.div (_44920, stride_44901#tt);
+    let _44925: Nat = %core.nat.add (1, _44923);
+    let _44590: Nat = %core.nat.add (10, lo_44587#0₄);
+    let _44594: Nat = %core.nat.add (_44590, hi_44591#0₄);
+    let _44597: Nat = %core.nat.add (i8, lo_44587#1₄);
+    let _44600: Nat = %core.nat.add (_44597, hi_44591#1₄);
+    let _44603: Nat = %core.nat.add (56, lo_44587#2₄);
+    let _44606: Nat = %core.nat.add (_44603, hi_44591#2₄);
+    let _44609: Nat = %core.nat.add (56, lo_44587#3₄);
+    let _44612: Nat = %core.nat.add (_44609, hi_44591#3₄);
+    let _44736: Nat = %core.nat.mul (2, padding_44733#ff);
+    let _44739: Nat = %core.nat.add (58, _44736);
+    let _44743: Nat = %core.nat.mul (2, dilation_44740#ff);
+    let _44745: Nat = %core.nat.add (1, _44743);
+    let _44747: Nat = %core.nat.sub (_44739, _44745);
+    let _44751: Nat = %core.nat.div (_44747, stride_44748#ff);
+    let _44753: Nat = %core.nat.add (1, _44751);
+    let _44756: Nat = %core.nat.mul (2, padding_44733#tt);
+    let _44759: Nat = %core.nat.add (58, _44756);
+    let _44762: Nat = %core.nat.mul (2, dilation_44740#tt);
+    let _44764: Nat = %core.nat.add (1, _44762);
+    let _44766: Nat = %core.nat.sub (_44759, _44764);
+    let _44769: Nat = %core.nat.div (_44766, stride_44748#tt);
+    let _44771: Nat = %core.nat.add (1, _44769);
+    let _44685: Nat = %core.nat.mul (2, padding_44682#ff);
+    let _44687: Nat = %core.nat.add (_44685, h_44667);
+    let _44689: Nat = %core.nat.sub (kh_44674, 1);
+    let _44693: Nat = %core.nat.mul (_44689, dilation_44690#ff);
+    let _44695: Nat = %core.nat.add (1, _44693);
+    let _44697: Nat = %core.nat.sub (_44687, _44695);
+    let _44701: Nat = %core.nat.div (_44697, stride_44698#ff);
+    let _44703: Nat = %core.nat.add (1, _44701);
+    let _44706: Nat = %core.nat.mul (2, padding_44682#tt);
+    let _44708: Nat = %core.nat.add (_44706, w_44668);
+    let _44710: Nat = %core.nat.sub (kw_44675, 1);
+    let _44713: Nat = %core.nat.mul (_44710, dilation_44690#tt);
+    let _44715: Nat = %core.nat.add (1, _44713);
+    let _44717: Nat = %core.nat.sub (_44708, _44715);
+    let _44720: Nat = %core.nat.div (_44717, stride_44698#tt);
+    let _44722: Nat = %core.nat.add (1, _44720);
+    let _44442: Nat = %core.nat.mul (2, padding_44439#ff);
+    let _44445: Nat = %core.nat.add (58, _44442);
+    let _44449: Nat = %core.nat.mul (2, dilation_44446#ff);
+    let _44451: Nat = %core.nat.add (1, _44449);
+    let _44453: Nat = %core.nat.sub (_44445, _44451);
+    let _44457: Nat = %core.nat.div (_44453, stride_44454#ff);
+    let _44459: Nat = %core.nat.add (1, _44457);
+    let _44462: Nat = %core.nat.mul (2, padding_44439#tt);
+    let _44465: Nat = %core.nat.add (58, _44462);
+    let _44468: Nat = %core.nat.mul (2, dilation_44446#tt);
+    let _44470: Nat = %core.nat.add (1, _44468);
+    let _44472: Nat = %core.nat.sub (_44465, _44470);
+    let _44475: Nat = %core.nat.div (_44472, stride_44454#tt);
+    let _44477: Nat = %core.nat.add (1, _44475);
+    let _44391: Nat = %core.nat.mul (2, padding_44388#ff);
+    let _44393: Nat = %core.nat.add (_44391, h_44373);
+    let _44395: Nat = %core.nat.sub (kh_44380, 1);
+    let _44399: Nat = %core.nat.mul (_44395, dilation_44396#ff);
+    let _44401: Nat = %core.nat.add (1, _44399);
+    let _44403: Nat = %core.nat.sub (_44393, _44401);
+    let _44407: Nat = %core.nat.div (_44403, stride_44404#ff);
+    let _44409: Nat = %core.nat.add (1, _44407);
+    let _44412: Nat = %core.nat.mul (2, padding_44388#tt);
+    let _44414: Nat = %core.nat.add (_44412, w_44374);
+    let _44416: Nat = %core.nat.sub (kw_44381, 1);
+    let _44419: Nat = %core.nat.mul (_44416, dilation_44396#tt);
+    let _44421: Nat = %core.nat.add (1, _44419);
+    let _44423: Nat = %core.nat.sub (_44414, _44421);
+    let _44426: Nat = %core.nat.div (_44423, stride_44404#tt);
+    let _44428: Nat = %core.nat.add (1, _44426);
+    let _44262: Nat = %core.nat.add (10, lo_44259#0₄);
+    let _44266: Nat = %core.nat.add (_44262, hi_44263#0₄);
+    let _44269: Nat = %core.nat.add (128, lo_44259#1₄);
+    let _44272: Nat = %core.nat.add (_44269, hi_44263#1₄);
+    let _44275: Nat = %core.nat.add (56, lo_44259#2₄);
+    let _44278: Nat = %core.nat.add (_44275, hi_44263#2₄);
+    let _44281: Nat = %core.nat.add (56, lo_44259#3₄);
+    let _44284: Nat = %core.nat.add (_44281, hi_44263#3₄);
+    let _44121: Nat = %core.nat.mul (2, padding_44118#ff);
+    let _44124: Nat = %core.nat.add (114, _44121);
+    let _44128: Nat = %core.nat.mul (2, dilation_44125#ff);
+    let _44130: Nat = %core.nat.add (1, _44128);
+    let _44132: Nat = %core.nat.sub (_44124, _44130);
+    let _44136: Nat = %core.nat.div (_44132, stride_44133#ff);
+    let _44138: Nat = %core.nat.add (1, _44136);
+    let _44141: Nat = %core.nat.mul (2, padding_44118#tt);
+    let _44144: Nat = %core.nat.add (114, _44141);
+    let _44147: Nat = %core.nat.mul (2, dilation_44125#tt);
+    let _44149: Nat = %core.nat.add (1, _44147);
+    let _44151: Nat = %core.nat.sub (_44144, _44149);
+    let _44154: Nat = %core.nat.div (_44151, stride_44133#tt);
+    let _44156: Nat = %core.nat.add (1, _44154);
+    let _44070: Nat = %core.nat.mul (2, padding_44067#ff);
+    let _44072: Nat = %core.nat.add (_44070, h_44052);
+    let _44074: Nat = %core.nat.sub (kh_44059, 1);
+    let _44078: Nat = %core.nat.mul (_44074, dilation_44075#ff);
+    let _44080: Nat = %core.nat.add (1, _44078);
+    let _44082: Nat = %core.nat.sub (_44072, _44080);
+    let _44086: Nat = %core.nat.div (_44082, stride_44083#ff);
+    let _44088: Nat = %core.nat.add (1, _44086);
+    let _44091: Nat = %core.nat.mul (2, padding_44067#tt);
+    let _44093: Nat = %core.nat.add (_44091, w_44053);
+    let _44095: Nat = %core.nat.sub (kw_44060, 1);
+    let _44098: Nat = %core.nat.mul (_44095, dilation_44075#tt);
+    let _44100: Nat = %core.nat.add (1, _44098);
+    let _44102: Nat = %core.nat.sub (_44093, _44100);
+    let _44105: Nat = %core.nat.div (_44102, stride_44083#tt);
+    let _44107: Nat = %core.nat.add (1, _44105);
+    let _43975: Nat = %core.nat.add (10, lo_43972#0₄);
+    let _43979: Nat = %core.nat.add (_43975, hi_43976#0₄);
+    let _43982: Nat = %core.nat.add (128, lo_43972#1₄);
+    let _43985: Nat = %core.nat.add (_43982, hi_43976#1₄);
+    let _43988: Nat = %core.nat.add (112, lo_43972#2₄);
+    let _43991: Nat = %core.nat.add (_43988, hi_43976#2₄);
+    let _43994: Nat = %core.nat.add (112, lo_43972#3₄);
+    let _43997: Nat = %core.nat.add (_43994, hi_43976#3₄);
+    let _43827: Nat = %core.nat.mul (2, padding_43824#ff);
+    let _43830: Nat = %core.nat.add (114, _43827);
+    let _43834: Nat = %core.nat.mul (2, dilation_43831#ff);
+    let _43836: Nat = %core.nat.add (1, _43834);
+    let _43838: Nat = %core.nat.sub (_43830, _43836);
+    let _43842: Nat = %core.nat.div (_43838, stride_43839#ff);
+    let _43844: Nat = %core.nat.add (1, _43842);
+    let _43847: Nat = %core.nat.mul (2, padding_43824#tt);
+    let _43850: Nat = %core.nat.add (114, _43847);
+    let _43853: Nat = %core.nat.mul (2, dilation_43831#tt);
+    let _43855: Nat = %core.nat.add (1, _43853);
+    let _43857: Nat = %core.nat.sub (_43850, _43855);
+    let _43860: Nat = %core.nat.div (_43857, stride_43839#tt);
+    let _43862: Nat = %core.nat.add (1, _43860);
+    let _43776: Nat = %core.nat.mul (2, padding_43773#ff);
+    let _43778: Nat = %core.nat.add (_43776, h_43758);
+    let _43780: Nat = %core.nat.sub (kh_43765, 1);
+    let _43784: Nat = %core.nat.mul (_43780, dilation_43781#ff);
+    let _43786: Nat = %core.nat.add (1, _43784);
+    let _43788: Nat = %core.nat.sub (_43778, _43786);
+    let _43792: Nat = %core.nat.div (_43788, stride_43789#ff);
+    let _43794: Nat = %core.nat.add (1, _43792);
+    let _43797: Nat = %core.nat.mul (2, padding_43773#tt);
+    let _43799: Nat = %core.nat.add (_43797, w_43759);
+    let _43801: Nat = %core.nat.sub (kw_43766, 1);
+    let _43804: Nat = %core.nat.mul (_43801, dilation_43781#tt);
+    let _43806: Nat = %core.nat.add (1, _43804);
+    let _43808: Nat = %core.nat.sub (_43799, _43806);
+    let _43811: Nat = %core.nat.div (_43808, stride_43789#tt);
+    let _43813: Nat = %core.nat.add (1, _43811);
+    let _43646: Nat = %core.nat.add (10, lo_43643#0₄);
+    let _43650: Nat = %core.nat.add (_43646, hi_43647#0₄);
+    let _43653: Nat = %core.nat.add (64, lo_43643#1₄);
+    let _43656: Nat = %core.nat.add (_43653, hi_43647#1₄);
+    let _43659: Nat = %core.nat.add (112, lo_43643#2₄);
+    let _43662: Nat = %core.nat.add (_43659, hi_43647#2₄);
+    let _43665: Nat = %core.nat.add (112, lo_43643#3₄);
+    let _43668: Nat = %core.nat.add (_43665, hi_43647#3₄);
+    let _43477: Nat = %core.nat.mul (2, padding_43474#ff);
+    let _43480: Nat = %core.nat.add (226, _43477);
+    let _43484: Nat = %core.nat.mul (2, dilation_43481#ff);
+    let _43486: Nat = %core.nat.add (1, _43484);
+    let _43488: Nat = %core.nat.sub (_43480, _43486);
+    let _43492: Nat = %core.nat.div (_43488, stride_43489#ff);
+    let _43494: Nat = %core.nat.add (1, _43492);
+    let _43497: Nat = %core.nat.mul (2, padding_43474#tt);
+    let _43500: Nat = %core.nat.add (226, _43497);
+    let _43503: Nat = %core.nat.mul (2, dilation_43481#tt);
+    let _43505: Nat = %core.nat.add (1, _43503);
+    let _43507: Nat = %core.nat.sub (_43500, _43505);
+    let _43510: Nat = %core.nat.div (_43507, stride_43489#tt);
+    let _43512: Nat = %core.nat.add (1, _43510);
+    let _43426: Nat = %core.nat.mul (2, padding_43423#ff);
+    let _43428: Nat = %core.nat.add (_43426, h_43408);
+    let _43430: Nat = %core.nat.sub (kh_43415, 1);
+    let _43434: Nat = %core.nat.mul (_43430, dilation_43431#ff);
+    let _43436: Nat = %core.nat.add (1, _43434);
+    let _43438: Nat = %core.nat.sub (_43428, _43436);
+    let _43442: Nat = %core.nat.div (_43438, stride_43439#ff);
+    let _43444: Nat = %core.nat.add (1, _43442);
+    let _43447: Nat = %core.nat.mul (2, padding_43423#tt);
+    let _43449: Nat = %core.nat.add (_43447, w_43409);
+    let _43451: Nat = %core.nat.sub (kw_43416, 1);
+    let _43454: Nat = %core.nat.mul (_43451, dilation_43431#tt);
+    let _43456: Nat = %core.nat.add (1, _43454);
+    let _43458: Nat = %core.nat.sub (_43449, _43456);
+    let _43461: Nat = %core.nat.div (_43458, stride_43439#tt);
+    let _43463: Nat = %core.nat.add (1, _43461);
+    let _43331: Nat = %core.nat.add (10, lo_43328#0₄);
+    let _43335: Nat = %core.nat.add (_43331, hi_43332#0₄);
+    let _43338: Nat = %core.nat.add (64, lo_43328#1₄);
+    let _43341: Nat = %core.nat.add (_43338, hi_43332#1₄);
+    let _43344: Nat = %core.nat.add (224, lo_43328#2₄);
+    let _43347: Nat = %core.nat.add (_43344, hi_43332#2₄);
+    let _43350: Nat = %core.nat.add (224, lo_43328#3₄);
+    let _43353: Nat = %core.nat.add (_43350, hi_43332#3₄);
+    let _43125: Nat = %core.nat.mul (2, padding_43122#ff);
+    let _43128: Nat = %core.nat.add (226, _43125);
+    let _43132: Nat = %core.nat.mul (2, dilation_43129#ff);
+    let _43134: Nat = %core.nat.add (1, _43132);
+    let _43136: Nat = %core.nat.sub (_43128, _43134);
+    let _43140: Nat = %core.nat.div (_43136, stride_43137#ff);
+    let _43142: Nat = %core.nat.add (1, _43140);
+    let _43145: Nat = %core.nat.mul (2, padding_43122#tt);
+    let _43148: Nat = %core.nat.add (226, _43145);
+    let _43151: Nat = %core.nat.mul (2, dilation_43129#tt);
+    let _43153: Nat = %core.nat.add (1, _43151);
+    let _43155: Nat = %core.nat.sub (_43148, _43153);
+    let _43158: Nat = %core.nat.div (_43155, stride_43137#tt);
+    let _43160: Nat = %core.nat.add (1, _43158);
+    let _43074: Nat = %core.nat.mul (2, padding_43071#ff);
+    let _43076: Nat = %core.nat.add (_43074, h_43056);
+    let _43078: Nat = %core.nat.sub (kh_43063, 1);
+    let _43082: Nat = %core.nat.mul (_43078, dilation_43079#ff);
+    let _43084: Nat = %core.nat.add (1, _43082);
+    let _43086: Nat = %core.nat.sub (_43076, _43084);
+    let _43090: Nat = %core.nat.div (_43086, stride_43087#ff);
+    let _43092: Nat = %core.nat.add (1, _43090);
+    let _43095: Nat = %core.nat.mul (2, padding_43071#tt);
+    let _43097: Nat = %core.nat.add (_43095, w_43057);
+    let _43099: Nat = %core.nat.sub (kw_43064, 1);
+    let _43102: Nat = %core.nat.mul (_43099, dilation_43079#tt);
+    let _43104: Nat = %core.nat.add (1, _43102);
+    let _43106: Nat = %core.nat.sub (_43097, _43104);
+    let _43109: Nat = %core.nat.div (_43106, stride_43087#tt);
+    let _43111: Nat = %core.nat.add (1, _43109);
+    let _42856: Nat = %core.nat.add (10, lo_42853#0₄);
+    let _42860: Nat = %core.nat.add (_42856, hi_42857#0₄);
+    let _42863: Nat = %core.nat.add (3, lo_42853#1₄);
+    let _42866: Nat = %core.nat.add (_42863, hi_42857#1₄);
+    let _42869: Nat = %core.nat.add (224, lo_42853#2₄);
+    let _42872: Nat = %core.nat.add (_42869, hi_42857#2₄);
+    let _42875: Nat = %core.nat.add (224, lo_42853#3₄);
+    let _42878: Nat = %core.nat.add (_42875, hi_42857#3₄);
+    let _42899: «10; «3; «226; «226; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 3, 224, 224) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_42729, 0:(%math.F (23, 8)));
+    let _43176: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_43020, ring_fmul_43035) (10, 3, 64, 226, 226, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_42899, _42731);
+    let _43018: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 64, 224, 224)› (%math.F (23, 8), 1, 64) (broadcast_copy_42911, ⊥:(%math.F (23, 8))) _42936 _42951 _42733;
+    let _43291: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 64, 224, 224)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 64, 224, 224)›) (add_init_43180, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_43176, _43018);
+    let _43324: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 64, 224, 224)› (%math.F (23, 8), 4, (10, 64, 224, 224)) (linalg_body_43292, ⊥:(%math.F (23, 8))) _42936 _42936 _43291;
+    let _43366: «10; «64; «226; «226; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 64, 224, 224) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_43324, 0:(%math.F (23, 8)));
+    let _43522: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_43378, ring_fmul_43390) (10, 64, 64, 226, 226, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_43366, _42735);
+    let _43377: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 64, 224, 224)› (%math.F (23, 8), 1, 64) (broadcast_copy_43367, ⊥:(%math.F (23, 8))) _42936 _42951 _42737;
+    let _43544: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 64, 224, 224)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 64, 224, 224)›) (add_init_43523, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_43522, _43377);
+    let _43567: «10; «64; «224; «224; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 64, 224, 224)› (%math.F (23, 8), 4, (10, 64, 224, 224)) (linalg_body_43545, ⊥:(%math.F (23, 8))) _42936 _42936 _43544;
+    let _43638: «10; «64; «112; «112; %math.F (23, 8)»»»» = %tensor.pool (%math.F (23, 8)) (pool_max_43584, 4286578688:(%math.F (23, 8))) (10, 64, 224, 224) (‹2; 2›, ‹2; 2›, ‹2; 1›, ‹2; 0›, ‹2; 112›) _43567;
+    let _43686: «10; «64; «114; «114; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 64, 112, 112) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_43638, 0:(%math.F (23, 8)));
+    let _43877: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_43728, ring_fmul_43740) (10, 64, 128, 114, 114, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_43686, _42739);
+    let _43727: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 128, 112, 112)› (%math.F (23, 8), 1, 128) (broadcast_copy_43691, ⊥:(%math.F (23, 8))) _42936 _42951 _42741;
+    let _43939: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 128, 112, 112)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 128, 112, 112)›) (add_init_43878, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_43877, _43727);
+    let _43968: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 128, 112, 112)› (%math.F (23, 8), 4, (10, 128, 112, 112)) (linalg_body_43940, ⊥:(%math.F (23, 8))) _42936 _42936 _43939;
+    let _44010: «10; «128; «114; «114; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 128, 112, 112) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_43968, 0:(%math.F (23, 8)));
+    let _44166: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_44022, ring_fmul_44034) (10, 128, 128, 114, 114, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_44010, _42743);
+    let _44021: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 128, 112, 112)› (%math.F (23, 8), 1, 128) (broadcast_copy_44011, ⊥:(%math.F (23, 8))) _42936 _42951 _42745;
+    let _44188: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 128, 112, 112)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 128, 112, 112)›) (add_init_44167, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_44166, _44021);
+    let _44211: «10; «128; «112; «112; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 128, 112, 112)› (%math.F (23, 8), 4, (10, 128, 112, 112)) (linalg_body_44189, ⊥:(%math.F (23, 8))) _42936 _42936 _44188;
+    let _44254: «10; «128; «56; «56; %math.F (23, 8)»»»» = %tensor.pool (%math.F (23, 8)) (pool_max_44225, 4286578688:(%math.F (23, 8))) (10, 128, 112, 112) (‹2; 2›, ‹2; 2›, ‹2; 1›, ‹2; 0›, ‹2; 56›) _44211;
+    let _44301: «10; «128; «58; «58; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 128, 56, 56) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_44254, 0:(%math.F (23, 8)));
+    let _44492: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_44343, ring_fmul_44355) (10, 128, i8, 58, 58, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_44301, _42747);
+    let _44342: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (%math.F (23, 8), 1, i8) (broadcast_copy_44306, ⊥:(%math.F (23, 8))) _42936 _42951 _42749;
+    let _44554: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, i8, 56, 56)›) (add_init_44493, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_44492, _44342);
+    let _44583: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (%math.F (23, 8), 4, (10, i8, 56, 56)) (linalg_body_44555, ⊥:(%math.F (23, 8))) _42936 _42936 _44554;
+    let _44625: «10; «i8; «58; «58; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, i8, 56, 56) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_44583, 0:(%math.F (23, 8)));
+    let _44781: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_44637, ring_fmul_44649) (10, i8, i8, 58, 58, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_44625, _42751);
+    let _44636: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (%math.F (23, 8), 1, i8) (broadcast_copy_44626, ⊥:(%math.F (23, 8))) _42936 _42951 _42753;
+    let _44803: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, i8, 56, 56)›) (add_init_44782, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_44781, _44636);
+    let _44826: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (%math.F (23, 8), 4, (10, i8, 56, 56)) (linalg_body_44804, ⊥:(%math.F (23, 8))) _42936 _42936 _44803;
+    let _44828: «10; «i8; «58; «58; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, i8, 56, 56) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_44826, 0:(%math.F (23, 8)));
+    let _44981: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_44840, ring_fmul_44852) (10, i8, i8, 58, 58, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_44828, _42755);
+    let _44839: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (%math.F (23, 8), 1, i8) (broadcast_copy_44829, ⊥:(%math.F (23, 8))) _42936 _42951 _42757;
+    let _45003: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, i8, 56, 56)›) (add_init_44982, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_44981, _44839);
+    let _45026: «10; «i8; «56; «56; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, i8, 56, 56)› (%math.F (23, 8), 4, (10, i8, 56, 56)) (linalg_body_45004, ⊥:(%math.F (23, 8))) _42936 _42936 _45003;
+    let _45068: «10; «i8; «28; «28; %math.F (23, 8)»»»» = %tensor.pool (%math.F (23, 8)) (pool_max_45039, 4286578688:(%math.F (23, 8))) (10, i8, 56, 56) (‹2; 2›, ‹2; 2›, ‹2; 1›, ‹2; 0›, ‹2; 28›) _45026;
+    let _45115: «10; «i8; «30; «30; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, i8, 28, 28) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_45068, 0:(%math.F (23, 8)));
+    let _45306: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_45157, ring_fmul_45169) (10, i8, 512, 30, 30, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_45115, _42759);
+    let _45156: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (%math.F (23, 8), 1, 512) (broadcast_copy_45120, ⊥:(%math.F (23, 8))) _42936 _42951 _42761;
+    let _45368: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 512, 28, 28)›) (add_init_45307, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_45306, _45156);
+    let _45397: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (%math.F (23, 8), 4, (10, 512, 28, 28)) (linalg_body_45369, ⊥:(%math.F (23, 8))) _42936 _42936 _45368;
+    let _45439: «10; «512; «30; «30; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 512, 28, 28) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_45397, 0:(%math.F (23, 8)));
+    let _45595: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_45451, ring_fmul_45463) (10, 512, 512, 30, 30, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_45439, _42763);
+    let _45450: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (%math.F (23, 8), 1, 512) (broadcast_copy_45440, ⊥:(%math.F (23, 8))) _42936 _42951 _42765;
+    let _45617: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 512, 28, 28)›) (add_init_45596, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_45595, _45450);
+    let _45640: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (%math.F (23, 8), 4, (10, 512, 28, 28)) (linalg_body_45618, ⊥:(%math.F (23, 8))) _42936 _42936 _45617;
+    let _45642: «10; «512; «30; «30; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 512, 28, 28) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_45640, 0:(%math.F (23, 8)));
+    let _45795: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_45654, ring_fmul_45666) (10, 512, 512, 30, 30, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_45642, _42767);
+    let _45653: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (%math.F (23, 8), 1, 512) (broadcast_copy_45643, ⊥:(%math.F (23, 8))) _42936 _42951 _42769;
+    let _45817: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 512, 28, 28)›) (add_init_45796, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_45795, _45653);
+    let _45840: «10; «512; «28; «28; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 28, 28)› (%math.F (23, 8), 4, (10, 512, 28, 28)) (linalg_body_45818, ⊥:(%math.F (23, 8))) _42936 _42936 _45817;
+    let _45883: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.pool (%math.F (23, 8)) (pool_max_45854, 4286578688:(%math.F (23, 8))) (10, 512, 28, 28) (‹2; 2›, ‹2; 2›, ‹2; 1›, ‹2; 0›, ‹2; 14›) _45840;
+    let _45929: «10; «512; «16; «16; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 512, 14, 14) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_45883, 0:(%math.F (23, 8)));
+    let _46114: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_45965, ring_fmul_45977) (10, 512, 512, 16, 16, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_45929, _42771);
+    let _45964: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (%math.F (23, 8), 1, 512) (broadcast_copy_45930, ⊥:(%math.F (23, 8))) _42936 _42951 _42773;
+    let _46176: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 512, 14, 14)›) (add_init_46115, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_46114, _45964);
+    let _46205: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (%math.F (23, 8), 4, (10, 512, 14, 14)) (linalg_body_46177, ⊥:(%math.F (23, 8))) _42936 _42936 _46176;
+    let _46207: «10; «512; «16; «16; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 512, 14, 14) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_46205, 0:(%math.F (23, 8)));
+    let _46360: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_46219, ring_fmul_46231) (10, 512, 512, 16, 16, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_46207, _42775);
+    let _46218: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (%math.F (23, 8), 1, 512) (broadcast_copy_46208, ⊥:(%math.F (23, 8))) _42936 _42951 _42777;
+    let _46382: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 512, 14, 14)›) (add_init_46361, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_46360, _46218);
+    let _46405: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (%math.F (23, 8), 4, (10, 512, 14, 14)) (linalg_body_46383, ⊥:(%math.F (23, 8))) _42936 _42936 _46382;
+    let _46407: «10; «512; «16; «16; %math.F (23, 8)»»»» = %tensor.pad (%math.F (23, 8), 4) (10, 512, 14, 14) (0, (0, 0, 1, 1), (0, 0, 1, 1)) (_46405, 0:(%math.F (23, 8)));
+    let _46560: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.conv (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_46419, ring_fmul_46431) (10, 512, 512, 16, 16, 3, 3) (‹2; 1›, ‹2; 1›, ‹2; 0›) (_46407, _42779);
+    let _46418: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (%math.F (23, 8), 1, 512) (broadcast_copy_46408, ⊥:(%math.F (23, 8))) _42936 _42951 _42781;
+    let _46582: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 2 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (‹2; %math.F (23, 8)›, ‹2; 4›, ‹2; (10, 512, 14, 14)›) (add_init_46561, ⊥:(%math.F (23, 8))) _42936 ‹2; _42936› (_46560, _46418);
+    let _46605: «10; «512; «14; «14; %math.F (23, 8)»»»» = %tensor.map_reduce 1 (%math.F (23, 8), 4, 0) ‹2; (10, 512, 14, 14)› (%math.F (23, 8), 4, (10, 512, 14, 14)) (linalg_body_46583, ⊥:(%math.F (23, 8))) _42936 _42936 _46582;
+    let _46647: «10; «512; «7; «7; %math.F (23, 8)»»»» = %tensor.pool (%math.F (23, 8)) (pool_max_46618, 4286578688:(%math.F (23, 8))) (10, 512, 14, 14) (‹2; 2›, ‹2; 2›, ‹2; 1›, ‹2; 0›, ‹2; 7›) _46605;
+    let _46682: «10; «25088; %math.F (23, 8)»» = %tensor.reshape (%math.F (23, 8), 4, 2) (10, 512, 7, 7) (10, 25088) _46647;
+    let _46770: «25088; «4096; %math.F (23, 8)»» = %tensor.map_reduce 1 (%math.F (23, 8), 2, 0) ‹2; (25088, 4096)› (%math.F (23, 8), 2, (4096, 25088)) (transpose_copy_46686, ⊥:(%math.F (23, 8))) _46705 _46709 _42783;
+    let _47146: «10; «4096; %math.F (23, 8)»» = %tensor.dot_product (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_46775, ring_fmul_46787) ‹2; 2› (1, 0) (tt, ff, (), ()) ((10, 25088), (25088, 4096)) (_46682, _46770);
+    let _47263: «10; «4096; %math.F (23, 8)»» = %tensor.map_reduce 2 (%math.F (23, 8), 2, 0) ‹2; (10, 4096)› (‹2; %math.F (23, 8)›, (2, 1), ((10, 4096), 4096)) (linalg_body_47158, ⊥:(%math.F (23, 8))) _46705 (_46705, _47155) (_47146, _42785);
+    let _47310: «10; «4096; %math.F (23, 8)»» = %tensor.map_reduce 1 (%math.F (23, 8), 2, 0) ‹2; (10, 4096)› (%math.F (23, 8), 2, (10, 4096)) (linalg_body_47264, ⊥:(%math.F (23, 8))) _46705 _46705 _47263;
+    let _47348: «4096; «4096; %math.F (23, 8)»» = %tensor.map_reduce 1 (%math.F (23, 8), 2, 0) ‹2; ‹2; 4096›› (%math.F (23, 8), 2, ‹2; 4096›) (transpose_copy_47312, ⊥:(%math.F (23, 8))) _46705 _46709 _42787;
+    let _47720: «10; «4096; %math.F (23, 8)»» = %tensor.dot_product (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_47349, ring_fmul_47361) ‹2; 2› (1, 0) (tt, ff, (), ()) ((10, 4096), ‹2; 4096›) (_47310, _47348);
+    let _47743: «10; «4096; %math.F (23, 8)»» = %tensor.map_reduce 2 (%math.F (23, 8), 2, 0) ‹2; (10, 4096)› (‹2; %math.F (23, 8)›, (2, 1), ((10, 4096), 4096)) (linalg_body_47721, ⊥:(%math.F (23, 8))) _46705 (_46705, _47155) (_47720, _42789);
+    let _47766: «10; «4096; %math.F (23, 8)»» = %tensor.map_reduce 1 (%math.F (23, 8), 2, 0) ‹2; (10, 4096)› (%math.F (23, 8), 2, (10, 4096)) (linalg_body_47744, ⊥:(%math.F (23, 8))) _46705 _46705 _47743;
+    let _47807: «4096; «1000; %math.F (23, 8)»» = %tensor.map_reduce 1 (%math.F (23, 8), 2, 0) ‹2; (4096, 1000)› (%math.F (23, 8), 2, (1000, 4096)) (transpose_copy_47770, ⊥:(%math.F (23, 8))) _46705 _46709 _42791;
+    let _48181: «10; «1000; %math.F (23, 8)»» = %tensor.dot_product (%math.F (23, 8), 0:(%math.F (23, 8)), ring_fadd_47811, ring_fmul_47823) ‹2; 2› (1, 0) (tt, ff, (), ()) ((10, 4096), (4096, 1000)) (_47766, _47807);
+    let _48246: «10; «1000; %math.F (23, 8)»» = %tensor.map_reduce 2 (%math.F (23, 8), 2, 0) ‹2; (10, 1000)› (‹2; %math.F (23, 8)›, (2, 1), ((10, 1000), 1000)) (linalg_body_48183, ⊥:(%math.F (23, 8))) _46705 (_46705, _47155) (_48181, _42793);
+    _48248 (_42795, _48246);
+
+fun broadcast_copy_42911 ((%math.F (23, 8), _42914: %math.F (23, 8)) as _42913): %math.F (23, 8) =
+    _42915 _42913#tt;
+
+lam _42936 (_42938: %affine.index, _42939: %affine.index, _42940: %affine.index, _42941: %affine.index) as o_42937: «4; %affine.index» =
+    o_42937;
+
+lam _42951 (_: %affine.index, _42953: %affine.index, _: %affine.index, _: %affine.index) as o_42952: %affine.index =
+    _42953;
+
+lam ring_fadd_43020 (_43022: %math.F (23, 8), _43023: %math.F (23, 8)) as _43021: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _43021;
+
+lam ring_fmul_43035 (_43037: %math.F (23, 8), _43038: %math.F (23, 8)) as _43036: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _43036;
+
+fun add_init_43180 ((%math.F (23, 8), (_43184: %math.F (23, 8), _43185: %math.F (23, 8)) as _43183) as _43182): %math.F (23, 8) =
+    let _43193: %math.F (23, 8) = %math.arith.add (23, 8) 0 _43182#tt;
+    _43194 _43193;
+
+fun linalg_body_43292 ((_43295: %math.F (23, 8), _43296: %math.F (23, 8)) as _43294): %math.F (23, 8) =
+    let _43309: Bool = %math.cmp.UGle (23, 8) 0 (_43294#tt, 0:(%math.F (23, 8)));
+    _43312 (0:(%math.F (23, 8)), _43294#tt)#_43309;
+
+fun broadcast_copy_43367 ((%math.F (23, 8), _43370: %math.F (23, 8)) as _43369): %math.F (23, 8) =
+    _43371 _43369#tt;
+
+lam ring_fadd_43378 (_43380: %math.F (23, 8), _43381: %math.F (23, 8)) as _43379: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _43379;
+
+lam ring_fmul_43390 (_43392: %math.F (23, 8), _43393: %math.F (23, 8)) as _43391: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _43391;
+
+fun add_init_43523 ((%math.F (23, 8), (_43527: %math.F (23, 8), _43528: %math.F (23, 8)) as _43526) as _43525): %math.F (23, 8) =
+    let _43536: %math.F (23, 8) = %math.arith.add (23, 8) 0 _43525#tt;
+    _43537 _43536;
+
+fun linalg_body_43545 ((_43548: %math.F (23, 8), _43549: %math.F (23, 8)) as _43547): %math.F (23, 8) =
+    let _43558: Bool = %math.cmp.UGle (23, 8) 0 (_43547#tt, 0:(%math.F (23, 8)));
+    _43561 (0:(%math.F (23, 8)), _43547#tt)#_43558;
+
+lam pool_max_43584 (_43586: %math.F (23, 8), _43587: %math.F (23, 8)) as _43585: %math.F (23, 8) =
+    %math.extrema.iM (23, 8) 0 _43585;
+
+fun broadcast_copy_43691 ((%math.F (23, 8), _43694: %math.F (23, 8)) as _43693): %math.F (23, 8) =
+    _43695 _43693#tt;
+
+lam ring_fadd_43728 (_43730: %math.F (23, 8), _43731: %math.F (23, 8)) as _43729: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _43729;
+
+lam ring_fmul_43740 (_43742: %math.F (23, 8), _43743: %math.F (23, 8)) as _43741: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _43741;
+
+fun add_init_43878 ((%math.F (23, 8), (_43882: %math.F (23, 8), _43883: %math.F (23, 8)) as _43881) as _43880): %math.F (23, 8) =
+    let _43891: %math.F (23, 8) = %math.arith.add (23, 8) 0 _43880#tt;
+    _43892 _43891;
+
+fun linalg_body_43940 ((_43943: %math.F (23, 8), _43944: %math.F (23, 8)) as _43942): %math.F (23, 8) =
+    let _43953: Bool = %math.cmp.UGle (23, 8) 0 (_43942#tt, 0:(%math.F (23, 8)));
+    _43956 (0:(%math.F (23, 8)), _43942#tt)#_43953;
+
+fun broadcast_copy_44011 ((%math.F (23, 8), _44014: %math.F (23, 8)) as _44013): %math.F (23, 8) =
+    _44015 _44013#tt;
+
+lam ring_fadd_44022 (_44024: %math.F (23, 8), _44025: %math.F (23, 8)) as _44023: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _44023;
+
+lam ring_fmul_44034 (_44036: %math.F (23, 8), _44037: %math.F (23, 8)) as _44035: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _44035;
+
+fun add_init_44167 ((%math.F (23, 8), (_44171: %math.F (23, 8), _44172: %math.F (23, 8)) as _44170) as _44169): %math.F (23, 8) =
+    let _44180: %math.F (23, 8) = %math.arith.add (23, 8) 0 _44169#tt;
+    _44181 _44180;
+
+fun linalg_body_44189 ((_44192: %math.F (23, 8), _44193: %math.F (23, 8)) as _44191): %math.F (23, 8) =
+    let _44202: Bool = %math.cmp.UGle (23, 8) 0 (_44191#tt, 0:(%math.F (23, 8)));
+    _44205 (0:(%math.F (23, 8)), _44191#tt)#_44202;
+
+lam pool_max_44225 (_44227: %math.F (23, 8), _44228: %math.F (23, 8)) as _44226: %math.F (23, 8) =
+    %math.extrema.iM (23, 8) 0 _44226;
+
+fun broadcast_copy_44306 ((%math.F (23, 8), _44309: %math.F (23, 8)) as _44308): %math.F (23, 8) =
+    _44310 _44308#tt;
+
+lam ring_fadd_44343 (_44345: %math.F (23, 8), _44346: %math.F (23, 8)) as _44344: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _44344;
+
+lam ring_fmul_44355 (_44357: %math.F (23, 8), _44358: %math.F (23, 8)) as _44356: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _44356;
+
+fun add_init_44493 ((%math.F (23, 8), (_44497: %math.F (23, 8), _44498: %math.F (23, 8)) as _44496) as _44495): %math.F (23, 8) =
+    let _44506: %math.F (23, 8) = %math.arith.add (23, 8) 0 _44495#tt;
+    _44507 _44506;
+
+fun linalg_body_44555 ((_44558: %math.F (23, 8), _44559: %math.F (23, 8)) as _44557): %math.F (23, 8) =
+    let _44568: Bool = %math.cmp.UGle (23, 8) 0 (_44557#tt, 0:(%math.F (23, 8)));
+    _44571 (0:(%math.F (23, 8)), _44557#tt)#_44568;
+
+fun broadcast_copy_44626 ((%math.F (23, 8), _44629: %math.F (23, 8)) as _44628): %math.F (23, 8) =
+    _44630 _44628#tt;
+
+lam ring_fadd_44637 (_44639: %math.F (23, 8), _44640: %math.F (23, 8)) as _44638: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _44638;
+
+lam ring_fmul_44649 (_44651: %math.F (23, 8), _44652: %math.F (23, 8)) as _44650: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _44650;
+
+fun add_init_44782 ((%math.F (23, 8), (_44786: %math.F (23, 8), _44787: %math.F (23, 8)) as _44785) as _44784): %math.F (23, 8) =
+    let _44795: %math.F (23, 8) = %math.arith.add (23, 8) 0 _44784#tt;
+    _44796 _44795;
+
+fun linalg_body_44804 ((_44807: %math.F (23, 8), _44808: %math.F (23, 8)) as _44806): %math.F (23, 8) =
+    let _44817: Bool = %math.cmp.UGle (23, 8) 0 (_44806#tt, 0:(%math.F (23, 8)));
+    _44820 (0:(%math.F (23, 8)), _44806#tt)#_44817;
+
+fun broadcast_copy_44829 ((%math.F (23, 8), _44832: %math.F (23, 8)) as _44831): %math.F (23, 8) =
+    _44833 _44831#tt;
+
+lam ring_fadd_44840 (_44842: %math.F (23, 8), _44843: %math.F (23, 8)) as _44841: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _44841;
+
+lam ring_fmul_44852 (_44854: %math.F (23, 8), _44855: %math.F (23, 8)) as _44853: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _44853;
+
+fun add_init_44982 ((%math.F (23, 8), (_44986: %math.F (23, 8), _44987: %math.F (23, 8)) as _44985) as _44984): %math.F (23, 8) =
+    let _44995: %math.F (23, 8) = %math.arith.add (23, 8) 0 _44984#tt;
+    _44996 _44995;
+
+fun linalg_body_45004 ((_45007: %math.F (23, 8), _45008: %math.F (23, 8)) as _45006): %math.F (23, 8) =
+    let _45017: Bool = %math.cmp.UGle (23, 8) 0 (_45006#tt, 0:(%math.F (23, 8)));
+    _45020 (0:(%math.F (23, 8)), _45006#tt)#_45017;
+
+lam pool_max_45039 (_45041: %math.F (23, 8), _45042: %math.F (23, 8)) as _45040: %math.F (23, 8) =
+    %math.extrema.iM (23, 8) 0 _45040;
+
+fun broadcast_copy_45120 ((%math.F (23, 8), _45123: %math.F (23, 8)) as _45122): %math.F (23, 8) =
+    _45124 _45122#tt;
+
+lam ring_fadd_45157 (_45159: %math.F (23, 8), _45160: %math.F (23, 8)) as _45158: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _45158;
+
+lam ring_fmul_45169 (_45171: %math.F (23, 8), _45172: %math.F (23, 8)) as _45170: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _45170;
+
+fun add_init_45307 ((%math.F (23, 8), (_45311: %math.F (23, 8), _45312: %math.F (23, 8)) as _45310) as _45309): %math.F (23, 8) =
+    let _45320: %math.F (23, 8) = %math.arith.add (23, 8) 0 _45309#tt;
+    _45321 _45320;
+
+fun linalg_body_45369 ((_45372: %math.F (23, 8), _45373: %math.F (23, 8)) as _45371): %math.F (23, 8) =
+    let _45382: Bool = %math.cmp.UGle (23, 8) 0 (_45371#tt, 0:(%math.F (23, 8)));
+    _45385 (0:(%math.F (23, 8)), _45371#tt)#_45382;
+
+fun broadcast_copy_45440 ((%math.F (23, 8), _45443: %math.F (23, 8)) as _45442): %math.F (23, 8) =
+    _45444 _45442#tt;
+
+lam ring_fadd_45451 (_45453: %math.F (23, 8), _45454: %math.F (23, 8)) as _45452: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _45452;
+
+lam ring_fmul_45463 (_45465: %math.F (23, 8), _45466: %math.F (23, 8)) as _45464: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _45464;
+
+fun add_init_45596 ((%math.F (23, 8), (_45600: %math.F (23, 8), _45601: %math.F (23, 8)) as _45599) as _45598): %math.F (23, 8) =
+    let _45609: %math.F (23, 8) = %math.arith.add (23, 8) 0 _45598#tt;
+    _45610 _45609;
+
+fun linalg_body_45618 ((_45621: %math.F (23, 8), _45622: %math.F (23, 8)) as _45620): %math.F (23, 8) =
+    let _45631: Bool = %math.cmp.UGle (23, 8) 0 (_45620#tt, 0:(%math.F (23, 8)));
+    _45634 (0:(%math.F (23, 8)), _45620#tt)#_45631;
+
+fun broadcast_copy_45643 ((%math.F (23, 8), _45646: %math.F (23, 8)) as _45645): %math.F (23, 8) =
+    _45647 _45645#tt;
+
+lam ring_fadd_45654 (_45656: %math.F (23, 8), _45657: %math.F (23, 8)) as _45655: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _45655;
+
+lam ring_fmul_45666 (_45668: %math.F (23, 8), _45669: %math.F (23, 8)) as _45667: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _45667;
+
+fun add_init_45796 ((%math.F (23, 8), (_45800: %math.F (23, 8), _45801: %math.F (23, 8)) as _45799) as _45798): %math.F (23, 8) =
+    let _45809: %math.F (23, 8) = %math.arith.add (23, 8) 0 _45798#tt;
+    _45810 _45809;
+
+fun linalg_body_45818 ((_45821: %math.F (23, 8), _45822: %math.F (23, 8)) as _45820): %math.F (23, 8) =
+    let _45831: Bool = %math.cmp.UGle (23, 8) 0 (_45820#tt, 0:(%math.F (23, 8)));
+    _45834 (0:(%math.F (23, 8)), _45820#tt)#_45831;
+
+lam pool_max_45854 (_45856: %math.F (23, 8), _45857: %math.F (23, 8)) as _45855: %math.F (23, 8) =
+    %math.extrema.iM (23, 8) 0 _45855;
+
+fun broadcast_copy_45930 ((%math.F (23, 8), _45933: %math.F (23, 8)) as _45932): %math.F (23, 8) =
+    _45934 _45932#tt;
+
+lam ring_fadd_45965 (_45967: %math.F (23, 8), _45968: %math.F (23, 8)) as _45966: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _45966;
+
+lam ring_fmul_45977 (_45979: %math.F (23, 8), _45980: %math.F (23, 8)) as _45978: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _45978;
+
+fun add_init_46115 ((%math.F (23, 8), (_46119: %math.F (23, 8), _46120: %math.F (23, 8)) as _46118) as _46117): %math.F (23, 8) =
+    let _46128: %math.F (23, 8) = %math.arith.add (23, 8) 0 _46117#tt;
+    _46129 _46128;
+
+fun linalg_body_46177 ((_46180: %math.F (23, 8), _46181: %math.F (23, 8)) as _46179): %math.F (23, 8) =
+    let _46190: Bool = %math.cmp.UGle (23, 8) 0 (_46179#tt, 0:(%math.F (23, 8)));
+    _46193 (0:(%math.F (23, 8)), _46179#tt)#_46190;
+
+fun broadcast_copy_46208 ((%math.F (23, 8), _46211: %math.F (23, 8)) as _46210): %math.F (23, 8) =
+    _46212 _46210#tt;
+
+lam ring_fadd_46219 (_46221: %math.F (23, 8), _46222: %math.F (23, 8)) as _46220: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _46220;
+
+lam ring_fmul_46231 (_46233: %math.F (23, 8), _46234: %math.F (23, 8)) as _46232: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _46232;
+
+fun add_init_46361 ((%math.F (23, 8), (_46365: %math.F (23, 8), _46366: %math.F (23, 8)) as _46364) as _46363): %math.F (23, 8) =
+    let _46374: %math.F (23, 8) = %math.arith.add (23, 8) 0 _46363#tt;
+    _46375 _46374;
+
+fun linalg_body_46383 ((_46386: %math.F (23, 8), _46387: %math.F (23, 8)) as _46385): %math.F (23, 8) =
+    let _46396: Bool = %math.cmp.UGle (23, 8) 0 (_46385#tt, 0:(%math.F (23, 8)));
+    _46399 (0:(%math.F (23, 8)), _46385#tt)#_46396;
+
+fun broadcast_copy_46408 ((%math.F (23, 8), _46411: %math.F (23, 8)) as _46410): %math.F (23, 8) =
+    _46412 _46410#tt;
+
+lam ring_fadd_46419 (_46421: %math.F (23, 8), _46422: %math.F (23, 8)) as _46420: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _46420;
+
+lam ring_fmul_46431 (_46433: %math.F (23, 8), _46434: %math.F (23, 8)) as _46432: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _46432;
+
+fun add_init_46561 ((%math.F (23, 8), (_46565: %math.F (23, 8), _46566: %math.F (23, 8)) as _46564) as _46563): %math.F (23, 8) =
+    let _46574: %math.F (23, 8) = %math.arith.add (23, 8) 0 _46563#tt;
+    _46575 _46574;
+
+fun linalg_body_46583 ((_46586: %math.F (23, 8), _46587: %math.F (23, 8)) as _46585): %math.F (23, 8) =
+    let _46596: Bool = %math.cmp.UGle (23, 8) 0 (_46585#tt, 0:(%math.F (23, 8)));
+    _46599 (0:(%math.F (23, 8)), _46585#tt)#_46596;
+
+lam pool_max_46618 (_46620: %math.F (23, 8), _46621: %math.F (23, 8)) as _46619: %math.F (23, 8) =
+    %math.extrema.iM (23, 8) 0 _46619;
+
+fun transpose_copy_46686 ((%math.F (23, 8), _46689: %math.F (23, 8)) as _46688): %math.F (23, 8) =
+    _46690 _46688#tt;
+
+lam _46705 (_46707: %affine.index, _46708: %affine.index) as o_46706: «2; %affine.index» =
+    o_46706;
+
+lam _46709 (_46712: %affine.index, _46711: %affine.index) as o_46710: «2; %affine.index» =
+    (_46711, _46712);
+
+lam ring_fadd_46775 (_46777: %math.F (23, 8), _46778: %math.F (23, 8)) as _46776: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _46776;
+
+lam ring_fmul_46787 (_46789: %math.F (23, 8), _46790: %math.F (23, 8)) as _46788: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _46788;
+
+lam _47155 (_: %affine.index, _47157: %affine.index) as o_47156: %affine.index =
+    _47157;
+
+fun linalg_body_47158 ((_47161: %math.F (23, 8), (_47163: %math.F (23, 8), _47164: %math.F (23, 8)) as _47162) as _47160): %math.F (23, 8) =
+    let _47172: %math.F (23, 8) = %math.arith.add (23, 8) 0 _47160#tt;
+    _47173 _47172;
+
+fun linalg_body_47264 ((_47267: %math.F (23, 8), _47268: %math.F (23, 8)) as _47266): %math.F (23, 8) =
+    let _47277: Bool = %math.cmp.UGle (23, 8) 0 (_47266#tt, 0:(%math.F (23, 8)));
+    _47280 (0:(%math.F (23, 8)), _47266#tt)#_47277;
+
+fun transpose_copy_47312 ((%math.F (23, 8), _47315: %math.F (23, 8)) as _47314): %math.F (23, 8) =
+    _47316 _47314#tt;
+
+lam ring_fadd_47349 (_47351: %math.F (23, 8), _47352: %math.F (23, 8)) as _47350: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _47350;
+
+lam ring_fmul_47361 (_47363: %math.F (23, 8), _47364: %math.F (23, 8)) as _47362: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _47362;
+
+fun linalg_body_47721 ((_47724: %math.F (23, 8), (_47726: %math.F (23, 8), _47727: %math.F (23, 8)) as _47725) as _47723): %math.F (23, 8) =
+    let _47735: %math.F (23, 8) = %math.arith.add (23, 8) 0 _47723#tt;
+    _47736 _47735;
+
+fun linalg_body_47744 ((_47747: %math.F (23, 8), _47748: %math.F (23, 8)) as _47746): %math.F (23, 8) =
+    let _47757: Bool = %math.cmp.UGle (23, 8) 0 (_47746#tt, 0:(%math.F (23, 8)));
+    _47760 (0:(%math.F (23, 8)), _47746#tt)#_47757;
+
+fun transpose_copy_47770 ((%math.F (23, 8), _47773: %math.F (23, 8)) as _47772): %math.F (23, 8) =
+    _47774 _47772#tt;
+
+lam ring_fadd_47811 (_47813: %math.F (23, 8), _47814: %math.F (23, 8)) as _47812: %math.F (23, 8) =
+    %math.arith.add (23, 8) 0 _47812;
+
+lam ring_fmul_47823 (_47825: %math.F (23, 8), _47826: %math.F (23, 8)) as _47824: %math.F (23, 8) =
+    %math.arith.mul (23, 8) 0 _47824;
+
+fun linalg_body_48183 ((_48186: %math.F (23, 8), (_48188: %math.F (23, 8), _48189: %math.F (23, 8)) as _48187) as _48185): %math.F (23, 8) =
+    let _48197: %math.F (23, 8) = %math.arith.add (23, 8) 0 _48185#tt;
+    _48198 _48197;
+
