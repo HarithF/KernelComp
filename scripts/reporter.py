@@ -42,6 +42,21 @@ by parsing a self-contained raw-pointer .ll belonging to the same model
 found or parsed, the comparison still runs -- just as flat arrays, and
 without the top-1 metric.
 
+Comparison metric: PASS requires max|pred-ref| / mean|ref| <= rtol, i.e. the
+error is judged against the tensor's own scale. Neither an absolute tolerance
+nor a pointwise relative one works on this data -- unnormalised random weights
+push VGG16's outputs to ~5e24 (so no atol is meetable), and pointwise
+diff/|ref| explodes wherever ref is near zero (VGG16: pointwise max 0.105,
+median 3.7e-06). Different lowerings sum in different orders and are not
+expected to be bit-identical, only faithful.
+
+Timing: each driver writes its own JSON timing report (median/mean/min/max
+over `reps`, see gen_drivers.py); reporter.py passes the path in and reads it
+back after the process exits rather than scraping stdout. Those land in the
+report per pipeline under `pipelines.<variant>.timing`, and are also collapsed
+into a top-level `timing_summary` with `median_ms` and `rel_median` (ratio to
+the fastest pipeline for that model) plus `fastest_pipeline`.
+
 Each model gets one JSON report written as:
     <out_dir>/<model_dir_basename>_<YYYYmmdd_HHMMSS>.json
 (<out_dir> defaults to the model's own directory.)
@@ -376,20 +391,41 @@ def run_torch_reference(module_path, weights_path, input_path, shape):
         print(f"warn: {module_path} has no `Model` class -- skipping", file=sys.stderr)
         return None
 
+    # Construct via get_init_inputs() when the reference file provides it.
+    # Every file in this repo follows that convention, and guessing instead
+    # (no-arg, then num_classes=) silently failed for 5 of 8 models: MLP,
+    # ShallowWideMLP and DeepNarrowMLP take (input_size, layer_sizes,
+    # output_size), and GoogleNetInceptionModule takes channel counts -- none
+    # of which a no-arg or num_classes= call can supply.
     model = None
-    ctor_attempts = [((), {})]
+    ctor_attempts = []
+    if hasattr(mod, "get_init_inputs"):
+        try:
+            init = mod.get_init_inputs()
+            init = list(init) if isinstance(init, (list, tuple)) else [init]
+            ctor_attempts.append((tuple(init), {}))
+        except Exception as e:
+            print(
+                f"warn: {module_path}'s get_init_inputs() raised: {e}", file=sys.stderr
+            )
+    # Fallbacks, for reference files that predate the convention.
+    ctor_attempts.append(((), {}))
     if shape is not None and shape.output_dims:
         ctor_attempts.append(((), {"num_classes": shape.output_dims[-1]}))
+
+    last_err = None
     for a, kw in ctor_attempts:
         try:
             model = mod.Model(*a, **kw)
             break
-        except TypeError:
+        except TypeError as e:
+            last_err = e
             continue
     if model is None:
         print(
-            f"warn: could not construct {module_path}'s Model() with a "
-            f"no-arg or num_classes= call -- skipping torch reference",
+            f"warn: could not construct {module_path}'s Model() -- tried "
+            f"get_init_inputs(), no-arg and num_classes=; last error: {last_err} "
+            f"-- skipping torch reference",
             file=sys.stderr,
         )
         return None
@@ -430,17 +466,42 @@ def run_torch_reference(module_path, weights_path, input_path, shape):
         return None
 
     x = np.fromfile(input_path, dtype=np.float32)
+
+    # Input shape, in order of trustworthiness:
+    #   1. the reference file's own get_inputs() -- authoritative
+    #   2. the shape recovered from a raw-pointer .ll
+    # (2) is not reliable on its own because the mim frontend COLLAPSES UNIT
+    # DIMENSIONS in its .ll signatures: LeNet5's input is declared
+    # [4096 x [32 x [32 x float]]], i.e. NCHW with C=1 dropped, so the
+    # recovered shape is (4096, 32, 32) and torch reads it as N=1, C=4096 --
+    # "expected input[1, 4096, 32, 32] to have 1 channels, but got 4096".
+    # get_inputs() says (4096, 1, 32, 32) and is right.
+    candidate_dims = []
+    if hasattr(mod, "get_inputs"):
+        try:
+            gi = mod.get_inputs()
+            gi = list(gi) if isinstance(gi, (list, tuple)) else [gi]
+            for t in gi:
+                if hasattr(t, "shape"):
+                    candidate_dims.append(list(t.shape))
+        except Exception as e:
+            print(f"warn: {module_path}'s get_inputs() raised: {e}", file=sys.stderr)
     if shape is not None and shape.input_dims:
-        expected = total_elems(shape.input_dims)
-        if x.size != expected:
+        candidate_dims.append(list(shape.input_dims))
+
+    x_t = None
+    for dims in candidate_dims:
+        if total_elems(dims) == x.size:
+            x_t = torch.from_numpy(x.reshape(tuple(dims)).copy())
+            break
+    if x_t is None:
+        if candidate_dims:
             print(
-                f"warn: input.bin has {x.size} floats, expected {expected} "
-                f"for shape {shape.input_dims} -- skipping torch reference",
+                f"warn: input.bin has {x.size} floats, matching none of the "
+                f"candidate shapes {candidate_dims} -- skipping torch reference",
                 file=sys.stderr,
             )
             return None
-        x_t = torch.from_numpy(x.reshape(tuple(shape.input_dims)).copy())
-    else:
         x_t = torch.from_numpy(x.copy())
 
     try:
@@ -459,16 +520,30 @@ def run_torch_reference(module_path, weights_path, input_path, shape):
 
 
 def run_pipeline(
-    pname, binary, weights_path, input_path, out_dir, reps, timeout, expected_size=None
+    pname,
+    binary,
+    weights_path,
+    input_path,
+    out_dir,
+    reps,
+    timeout,
+    run_id,
+    expected_size=None,
 ):
+    """Returns (array_or_None, timing_dict_or_None). timing_dict is read back
+    from the JSON report the driver itself writes (see gen_drivers.py) --
+    this is how reporter.py gets timing numbers without having to scrape
+    stdout, and how every pipeline/model run in this invocation ends up
+    tagged with the same run_id for correlation."""
     out_path = os.path.join(out_dir, f"output_{pname}.bin")
-    cmd = [binary, weights_path, input_path, str(reps), out_path]
+    json_path = os.path.join(out_dir, f"timing_{pname}_{run_id}.json")
+    cmd = [binary, weights_path, input_path, str(reps), out_path, run_id, json_path]
     print(f"[{pname}] running: {' '.join(cmd)}")
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         print(f"[{pname}] FAILED: timed out after {timeout}s", file=sys.stderr)
-        return None
+        return None, None
     if proc.stdout:
         print(f"[{pname}] stdout:\n{proc.stdout.strip()}")
     if proc.returncode != 0:
@@ -476,18 +551,35 @@ def run_pipeline(
             f"[{pname}] FAILED (exit {proc.returncode}):\n{proc.stderr}",
             file=sys.stderr,
         )
-        return None
+        return None, None
     if not os.path.isfile(out_path):
         print(f"[{pname}] FAILED: no output file written", file=sys.stderr)
-        return None
+        return None, None
     arr = np.fromfile(out_path, dtype=np.float32)
     if expected_size is not None and arr.size != expected_size:
         print(
             f"[{pname}] FAILED: output has {arr.size} floats, expected {expected_size}",
             file=sys.stderr,
         )
-        return None
-    return arr
+        return None, None
+
+    timing = None
+    if os.path.isfile(json_path):
+        try:
+            with open(json_path) as f:
+                timing = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            print(
+                f"[{pname}] warn: could not read timing report {json_path}: {e}",
+                file=sys.stderr,
+            )
+    else:
+        print(
+            f"[{pname}] warn: driver did not write expected timing report {json_path}",
+            file=sys.stderr,
+        )
+
+    return arr, timing
 
 
 # ---------------------------------------------------------------------------
@@ -508,12 +600,44 @@ def compare(pname, pred, ref, output_dims, atol, rtol):
     denom = np.abs(ref).copy()
     denom[denom == 0] = 1e-12
     max_rel = float((diff / denom).max())
-    close = bool(np.allclose(pred, ref, atol=atol, rtol=rtol))
+
+    # ---------------------------------------------------------------------
+    # PASS/FAIL is decided on error relative to the TENSOR's scale, not on
+    # pointwise relative error and not on an absolute tolerance.
+    #
+    # Both of the obvious metrics are useless on this data:
+    #
+    #  * absolute: gen_random_data.py uses unnormalised random weights, so
+    #    activations amplify layer over layer -- VGG16's outputs come out at
+    #    ~5e24. An atol of 1e-2 against 1e24 can never be met by anything.
+    #
+    #  * pointwise relative (diff/|ref|): explodes wherever ref happens to
+    #    sit near zero. On VGG16 the pointwise max is 0.105 while the median
+    #    is 3.7e-06 -- that 0.105 comes from ~0.3% of elements whose own
+    #    value is near zero, and says nothing about the pipeline.
+    #
+    # Scaling by mean|ref| gives the honest number. On VGG16 the two
+    # frontends differ by 2.1e-05 of typical output magnitude, which is the
+    # fp32 round-off floor for this many accumulations -- and top-1 agrees
+    # 100%. Different lowerings sum in different orders; they are not
+    # supposed to be bit-identical, only faithful.
+    # ---------------------------------------------------------------------
+    scale = float(np.abs(ref).mean())
+    if scale == 0.0:
+        scale = 1.0
+    scaled = diff / scale
+    max_scaled = float(scaled.max())
+    rms_scaled = float(np.sqrt(np.mean((diff / scale) ** 2)))
+    close = bool(max_scaled <= rtol + atol / scale)
 
     result = {
+        "ref_mean_abs": scale,
         "max_abs_diff": max_abs,
         "mean_abs_diff": mean_abs,
         "max_rel_diff": max_rel,
+        "max_diff_over_scale": max_scaled,
+        "rms_diff_over_scale": rms_scaled,
+        "frac_pointwise_rel_gt_1e3": float((diff / denom > 1e-3).mean()),
         "allclose": close,
     }
 
@@ -546,8 +670,9 @@ def compare(pname, pred, ref, output_dims, atol, rtol):
     result["status"] = "PASS" if ok else "FAIL"
 
     line = (
-        f"[{pname}] {result['status']}  max_abs_diff={max_abs:.6g}  "
-        f"mean_abs_diff={mean_abs:.6g}  max_rel_diff={max_rel:.6g}"
+        f"[{pname}] {result['status']}  max_diff/scale={max_scaled:.3g}  "
+        f"rms_diff/scale={rms_scaled:.3g}  (scale={scale:.3g}  "
+        f"max_abs={max_abs:.3g}  pointwise_max_rel={max_rel:.3g})"
     )
     if "top1_match" in result:
         line += f"  top1_match={result['top1_match']}"
@@ -559,6 +684,61 @@ def compare(pname, pred, ref, output_dims, atol, rtol):
             f"({m['pred_value']:.4f})"
         )
     return result
+
+
+TIMING_KEYS = ("reps", "median_ns", "mean_ns", "min_ns", "max_ns")
+
+
+def summarize_timings(timings):
+    """Build the report's top-level `timing_summary` from the per-pipeline
+    JSON reports the drivers wrote.
+
+    Keeps only the stats -- model/run_id/paths already appear at the top level
+    of the report, so repeating them per pipeline is noise. Adds `median_ms`
+    for readability and `rel_median` (ratio to the fastest pipeline's median),
+    which is the number this whole tree exists to produce.
+    """
+    stats = {}
+    for pname, t in timings.items():
+        if not t or t.get("median_ns") is None:
+            continue
+        stats[pname] = {k: t[k] for k in TIMING_KEYS if k in t}
+
+    medians = [
+        s["median_ns"] for s in stats.values() if (s.get("median_ns") or 0) > 0
+    ]
+    fastest = min(medians) if medians else None
+
+    for s in stats.values():
+        m = s.get("median_ns")
+        if m is not None:
+            s["median_ms"] = round(m / 1e6, 3)
+        if fastest and m:
+            s["rel_median"] = round(m / fastest, 3)
+    return stats
+
+
+def print_timing_table(name, stats, reps):
+    """One block per model, fastest first."""
+    if not stats:
+        print(f"[{name}] no timing reports collected")
+        return
+    print(f"[{name}] timings (median of {reps} rep(s), fastest first):")
+    order = sorted(stats.items(), key=lambda kv: kv[1].get("median_ns", float("inf")))
+    width = max(len(p) for p, _ in order)
+    for pname, s in order:
+        med = s.get("median_ns")
+        if med is None:
+            print(f"    {pname:<{width}}  (no timing)")
+            continue
+        rel = s.get("rel_median")
+        rel_s = f"{rel:>6.2f}x" if rel is not None else "     -"
+        print(
+            f"    {pname:<{width}}  {med / 1e6:10.2f} ms  {rel_s}   "
+            f"(min {s.get('min_ns', 0) / 1e6:.2f}  "
+            f"max {s.get('max_ns', 0) / 1e6:.2f}  "
+            f"mean {s.get('mean_ns', 0) / 1e6:.2f})"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -612,8 +792,9 @@ def process_model(model_dir, args):
     print(f"[{name}] pipelines found: {', '.join(sorted(pipelines))}")
 
     outputs = {}
+    timings = {}
     for pname, binary in sorted(pipelines.items()):
-        outputs[pname] = run_pipeline(
+        arr, timing = run_pipeline(
             pname,
             binary,
             weights_path,
@@ -621,8 +802,11 @@ def process_model(model_dir, args):
             out_dir,
             args.reps,
             args.timeout,
+            args.run_id,
             expected_out_size,
         )
+        outputs[pname] = arr
+        timings[pname] = timing
 
     baseline_name = None
     if ref is None:
@@ -648,34 +832,49 @@ def process_model(model_dir, args):
     for pname, pred in sorted(outputs.items()):
         if pname == baseline_name:
             results[pname] = {"status": "REFERENCE"}
-            continue
-        if pred is None:
+        elif pred is None:
             results[pname] = {"status": "SKIPPED"}
             all_ok = False
-            continue
-        r = compare(
-            pname, pred, ref, shape.output_dims if shape else None, args.atol, args.rtol
-        )
-        results[pname] = r
-        all_ok = all_ok and (r["status"] == "PASS")
+        else:
+            r = compare(
+                pname,
+                pred,
+                ref,
+                shape.output_dims if shape else None,
+                args.atol,
+                args.rtol,
+            )
+            results[pname] = r
+            all_ok = all_ok and (r["status"] == "PASS")
+        if timings.get(pname) is not None:
+            results[pname]["timing"] = timings[pname]
 
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    timing_summary = summarize_timings(timings)
+    print_timing_table(name, timing_summary, args.reps)
+
     report = {
         "model_dir": dir_basename,
         "model_name": name,
-        "timestamp": timestamp,
+        "run_id": args.run_id,
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "reference_source": ref_source,
         "reps": args.reps,
         "atol": args.atol,
         "rtol": args.rtol,
         "output_shape": shape.output_dims if shape else None,
+        "timing_summary": timing_summary,
+        "fastest_pipeline": (
+            min(timing_summary, key=lambda p: timing_summary[p]["median_ns"])
+            if timing_summary
+            else None
+        ),
         "pipelines": results,
         "all_pass": all_ok,
     }
 
     report_dir = args.out_dir_reports or model_dir
     os.makedirs(report_dir, exist_ok=True)
-    report_path = os.path.join(report_dir, f"{dir_basename}_{timestamp}.json")
+    report_path = os.path.join(report_dir, f"{dir_basename}_{args.run_id}.json")
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
     print(f"[{name}] report written: {report_path}")
@@ -697,8 +896,23 @@ def main():
     ap.add_argument(
         "--reps", type=int, default=1, help="reps passed to each driver binary"
     )
-    ap.add_argument("--atol", type=float, default=1e-2)
-    ap.add_argument("--rtol", type=float, default=1e-3)
+    # PASS requires max|pred-ref| / mean|ref|  <=  rtol + atol/mean|ref|.
+    # rtol is therefore the meaningful knob: it is the allowed error as a
+    # fraction of the tensor's own typical magnitude. 1e-3 leaves ~50x margin
+    # over the fp32 reduction-order floor measured on these models (2e-5).
+    ap.add_argument(
+        "--rtol",
+        type=float,
+        default=1e-3,
+        help="allowed max error as a fraction of mean|ref| (default 1e-3)",
+    )
+    ap.add_argument(
+        "--atol",
+        type=float,
+        default=1e-2,
+        help="absolute slack, added as atol/mean|ref|; negligible unless "
+        "outputs are tiny (default 1e-2)",
+    )
     ap.add_argument(
         "--out-dir",
         dest="out_dir_per_model",
@@ -714,7 +928,19 @@ def main():
     ap.add_argument(
         "--timeout", type=int, default=600, help="per-pipeline run timeout, in seconds"
     )
+    ap.add_argument(
+        "--run-id",
+        default=None,
+        help="Shared id passed to every driver invocation and used in every "
+        "report/timing filename this run produces (default: a generated "
+        "UTC timestamp). Pass one explicitly to tie a reporter.py run to "
+        "an id from elsewhere.",
+    )
+
     args = ap.parse_args()
+
+    if args.run_id is None:
+        args.run_id = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
 
     if not os.path.isdir(args.root):
         print(f"error: not a directory: {args.root}", file=sys.stderr)
@@ -729,6 +955,7 @@ def main():
         )
         sys.exit(1)
 
+    print(f"==> run_id: {args.run_id}")
     print(f"==> found {len(model_dirs)} model(s):")
     for d in model_dirs:
         print(f"      {d}")

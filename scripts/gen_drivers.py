@@ -547,7 +547,147 @@ static int cmp_double(const void *a, const void *b) {
 """
 
 
-def generate_mim_driver(sig, input_idx):
+def c_timing_report_helper():
+    """Shared helpers for both driver styles: a run-id (argv[5], or a
+    UTC-timestamp generated if omitted -- this is what lets a driver be run
+    standalone and still get a sensible, sortable id) and a JSON timing
+    report (argv[6], or derived from the run-id if omitted) that a caller
+    like reporter.py can read back after the process exits, rather than
+    having to scrape stdout for timing numbers."""
+    return """static void resolve_run_id(int argc, char **argv, char *buf, size_t buflen) {
+  if (argc > 5) {
+    snprintf(buf, buflen, "%s", argv[5]);
+    return;
+  }
+  time_t now = time(NULL);
+  struct tm tm_utc;
+  gmtime_r(&now, &tm_utc);
+  strftime(buf, buflen, "%Y%m%d_%H%M%S", &tm_utc);
+}
+
+static void print_json_string(FILE *f, const char *s) {
+  fputc('"', f);
+  for (const char *p = s; *p; p++) {
+    if (*p == '"' || *p == '\\\\')
+      fputc('\\\\', f);
+    fputc(*p, f);
+  }
+  fputc('"', f);
+}
+
+static void write_timing_report(const char *json_path, const char *model,
+                                 const char *pipeline, const char *run_id,
+                                 const char *weights_path, const char *input_path,
+                                 const char *output_path, int reps,
+                                 double median_ns, double mean_ns, double min_ns,
+                                 double max_ns) {
+  FILE *jf = fopen(json_path, "w");
+  if (!jf) {
+    fprintf(stderr, "warning: failed to write timing report '%s': ", json_path);
+    perror(NULL);
+    return;
+  }
+  fprintf(jf, "{\\n  \\"model\\": ");
+  print_json_string(jf, model);
+  fprintf(jf, ",\\n  \\"pipeline\\": ");
+  print_json_string(jf, pipeline);
+  fprintf(jf, ",\\n  \\"run_id\\": ");
+  print_json_string(jf, run_id);
+  fprintf(jf, ",\\n  \\"weights_path\\": ");
+  print_json_string(jf, weights_path);
+  fprintf(jf, ",\\n  \\"input_path\\": ");
+  print_json_string(jf, input_path);
+  fprintf(jf, ",\\n  \\"output_path\\": ");
+  print_json_string(jf, output_path);
+  fprintf(jf, ",\\n  \\"reps\\": %d", reps);
+  fprintf(jf, ",\\n  \\"median_ns\\": %.1f", median_ns);
+  fprintf(jf, ",\\n  \\"mean_ns\\": %.1f", mean_ns);
+  fprintf(jf, ",\\n  \\"min_ns\\": %.1f", min_ns);
+  fprintf(jf, ",\\n  \\"max_ns\\": %.1f", max_ns);
+  fprintf(jf, "\\n}\\n");
+  fclose(jf);
+  printf("wrote timing report to %s\\n", json_path);
+  fflush(stdout);
+}
+"""
+
+
+def c_fork_helpers():
+    """Helpers that let each call to the model run in a forked child.
+
+    Why: the mim frontend's generated code allocates every intermediate
+    buffer and never frees one -- 0 `free` calls in *_mim.ll, against 28 in
+    the MLIR path, which gets them from --buffer-deallocation-pipeline.
+    Those buffers are internal temporaries; the driver holds no pointer to
+    them, so no amount of `free` here can reach them. Measured per call:
+    GoogleNetInceptionModule 5.52 GiB, AlexNet 7.79 GiB. At --reps 10 (11
+    calls, counting warm-up) GoogleNet needed ~71 GiB and was killed by the
+    OOM killer at 32.4 GiB; AlexNet died the same way.
+
+    Forking bounds peak memory at ONE call's worth regardless of reps,
+    because the kernel reclaims the child's whole address space on _exit.
+    """
+    return """/* --- per-call process isolation; see c_fork_helpers() in gen_drivers.py ---
+ * Each call to the model runs in a forked child, so the leak of its
+ * internal intermediates cannot accumulate across reps. Weights and input
+ * are inherited copy-on-write and are NOT duplicated. Elapsed times come
+ * back through a shared anonymous mapping, and the final rep's child writes
+ * the output file itself so the result never has to cross the process
+ * boundary.
+ *
+ * Set DRIVER_NO_FORK=1 to run every call in-process instead -- the previous
+ * behaviour, for A/B or for profilers that dislike fork.
+ */
+static int driver_fork_enabled(void) {
+  const char *e = getenv("DRIVER_NO_FORK");
+  return !(e && e[0] && e[0] != '0');
+}
+
+static double *alloc_shared_times(int reps) {
+  size_t n = (size_t)reps * sizeof(double);
+  void *p = mmap(NULL, n, PROT_READ | PROT_WRITE,
+                 MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  if (p == MAP_FAILED) {
+    perror("mmap for shared timing buffer");
+    exit(1);
+  }
+  return (double *)p;
+}
+
+static void await_child(pid_t pid, const char *what) {
+  int st = 0;
+  if (waitpid(pid, &st, 0) < 0) {
+    perror("waitpid");
+    exit(1);
+  }
+  if (WIFSIGNALED(st)) {
+    int s = WTERMSIG(st);
+    fprintf(stderr, "%s: child killed by signal %d\\n", what, s);
+    if (s == SIGKILL)
+      fprintf(stderr,
+              "  SIGKILL almost always means the OOM killer. This model "
+              "leaks several GiB\\n  per call inside the generated code; a "
+              "single call already exceeds free RAM.\\n  Forking bounds the "
+              "leak to one call, so it cannot help beyond that.\\n");
+    exit(1);
+  }
+  if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+    fprintf(stderr, "%s: child exited with status %d\\n", what,
+            WIFEXITED(st) ? WEXITSTATUS(st) : -1);
+    exit(1);
+  }
+}
+
+static void release_times(double *times, int reps, int forked) {
+  if (forked)
+    munmap(times, (size_t)reps * sizeof(double));
+  else
+    free(times);
+}
+"""
+
+
+def generate_mim_driver(sig, input_idx, variant_name):
     name = sig.name
     params = sig.params
     out_dims = sig.return_dims
@@ -573,10 +713,14 @@ def generate_mim_driver(sig, input_idx):
         f" * {p.cname}: shape {p.dims} ({p.role})" for p in params
     )
 
-    src = f"""#include <stdint.h>
+    src = f"""#include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 
 /* Auto-generated driver for `{name}` ("mim" raw-pointer calling convention).
  * Generated by gen_drivers.py -- do not hand-edit.
@@ -591,6 +735,12 @@ def generate_mim_driver(sig, input_idx):
  * flattens it into one pointer per calling-convention slot in order, so a
  * flat `float *` extern declaration reproduces the real calling convention
  * with no translation layer.
+ *
+ * Usage: {name}_driver_mim <weights> <input> <reps> <output> [run_id] [json_report]
+ * run_id/json_report default to a generated UTC timestamp / a filename
+ * derived from it if omitted -- pass the same run_id across every model
+ * and pipeline in one batch (e.g. from reporter.py) to correlate their
+ * timing reports.
  */
 extern float *{name}({extern_args});
 
@@ -598,6 +748,8 @@ extern float *{name}({extern_args});
 static const size_t OUT_COUNT = {out_count};
 
 {c_read_floats_helper()}
+{c_timing_report_helper()}
+{c_fork_helpers()}
 static void write_result(float *out, const char *output_path) {{
   printf("writing output to %s...\\n", output_path);
   fflush(stdout);
@@ -625,6 +777,19 @@ int main(int argc, char **argv) {{
   int reps = argc > 3 ? atoi(argv[3]) : 5;
   const char *output_path = argc > 4 ? argv[4] : "output_mim.bin";
 
+  char run_id_buf[64];
+  resolve_run_id(argc, argv, run_id_buf, sizeof(run_id_buf));
+  const char *run_id = run_id_buf;
+
+  char json_path_buf[512];
+  const char *json_report_path;
+  if (argc > 6) {{
+    json_report_path = argv[6];
+  }} else {{
+    snprintf(json_path_buf, sizeof(json_path_buf), "{name}_{variant_name}_%s_timing.json", run_id);
+    json_report_path = json_path_buf;
+  }}
+
   FILE *wf = fopen(weights_path, "rb");
   if (!wf) {{
     fprintf(stderr, "failed to open weights file '%s': ", weights_path);
@@ -651,11 +816,24 @@ int main(int argc, char **argv) {{
 
   printf("input loaded.\\n");
   fflush(stdout);
-  double *times = (double *)malloc(reps * sizeof(double));
+  const int use_fork = driver_fork_enabled();
+  double *times = use_fork ? alloc_shared_times(reps)
+                           : (double *)malloc(reps * sizeof(double));
+  printf("call isolation: %s\\n", use_fork ? "fork per call" : "in-process (DRIVER_NO_FORK)");
 
   printf("start warm-up (1 call)...\\n");
   fflush(stdout);
-  for (int i = 0; i < 1; i++) {{
+  if (use_fork) {{
+    fflush(NULL);
+    pid_t p = fork();
+    if (p < 0) {{ perror("fork"); return 1; }}
+    if (p == 0) {{
+      float *out = {name}({call_args});
+      free(out);
+      _exit(0);
+    }}
+    await_child(p, "warm-up");
+  }} else {{
     float *out = {name}({call_args});
     free(out);
   }}
@@ -665,20 +843,43 @@ int main(int argc, char **argv) {{
   fflush(stdout);
   float *out = NULL;
   for (int i = 0; i < reps; i++) {{
-    struct timespec t0, t1;
-    clock_gettime(CLOCK_MONOTONIC, &t0);
-    float *cur = {name}({call_args});
-    clock_gettime(CLOCK_MONOTONIC, &t1);
-    times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
-               (double)(t1.tv_nsec - t0.tv_nsec);
-    if (out)
-      free(out);
-    out = cur;
+    const int is_last = (i == reps - 1);
+    if (use_fork) {{
+      fflush(NULL);
+      pid_t p = fork();
+      if (p < 0) {{ perror("fork"); return 1; }}
+      if (p == 0) {{
+        struct timespec t0, t1;
+        clock_gettime(CLOCK_MONOTONIC, &t0);
+        float *cur = {name}({call_args});
+        clock_gettime(CLOCK_MONOTONIC, &t1);
+        times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
+                   (double)(t1.tv_nsec - t0.tv_nsec);
+        /* The last rep's child owns writing the result -- that keeps the
+           output buffer from having to cross the process boundary.
+           write_result() frees `cur`. */
+        if (is_last)
+          write_result(cur, output_path);
+        _exit(0);
+      }}
+      await_child(p, "timed rep");
+    }} else {{
+      struct timespec t0, t1;
+      clock_gettime(CLOCK_MONOTONIC, &t0);
+      float *cur = {name}({call_args});
+      clock_gettime(CLOCK_MONOTONIC, &t1);
+      times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
+                 (double)(t1.tv_nsec - t0.tv_nsec);
+      if (out)
+        free(out);
+      out = cur;
+    }}
   }}
   printf("finish timed reps...\\n");
   fflush(stdout);
 
-  write_result(out, output_path);
+  if (!use_fork)
+    write_result(out, output_path);
 
   qsort(times, reps, sizeof(double), cmp_double);
   double sum = 0;
@@ -690,8 +891,12 @@ int main(int argc, char **argv) {{
          weights_path, input_path, reps, times[reps / 2], sum / reps, times[0],
          times[reps - 1]);
 
+  write_timing_report(json_report_path, "{name}", "{variant_name}", run_id,
+                       weights_path, input_path, output_path, reps,
+                       times[reps / 2], sum / reps, times[0], times[reps - 1]);
+
   free(x);
-  free(times);
+  release_times(times, reps, use_fork);
   return 0;
 }}
 """
@@ -703,7 +908,7 @@ int main(int argc, char **argv) {{
 # ---------------------------------------------------------------------------
 
 
-def generate_mlir_driver(sig, shape_sig, input_idx, source_desc=None):
+def generate_mlir_driver(sig, shape_sig, input_idx, variant_name, source_desc=None):
     """sig: Signature parsed from THIS .ll (has correct arg ptr/i64 layout
     and mlir_groups, but no dims). shape_sig: canonical Signature (same
     model) supplying real dims, positionally matched. source_desc: a short
@@ -789,10 +994,14 @@ def generate_mlir_driver(sig, shape_sig, input_idx, source_desc=None):
         f" * {p.cname}: shape {p.dims} ({p.role})" for p in sig.params
     )
 
-    src = f"""#include <stdint.h>
+    src = f"""#include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 
 /* Auto-generated driver for `{name}` matching MLIR's expanded memref
  * descriptor calling convention (convert-func-to-llvm output). Generated
@@ -803,6 +1012,12 @@ def generate_mlir_driver(sig, shape_sig, input_idx, source_desc=None):
  * matched positionally:
 {shape_comment_lines}
  * output: shape {out_dims}
+ *
+ * Usage: {name}_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
+ * run_id/json_report default to a generated UTC timestamp / a filename
+ * derived from it if omitted -- pass the same run_id across every model
+ * and pipeline in one batch (e.g. from reporter.py) to correlate their
+ * timing reports.
  */
 
 {typedefs}
@@ -813,6 +1028,8 @@ extern memref{out_rank}d {name}(
 {count_decls}
 
 {c_read_floats_helper()}
+{c_timing_report_helper()}
+{c_fork_helpers()}
 static void write_result(memref{out_rank}d out, const char *output_path) {{
   printf("writing output to %s...\\n", output_path);
   fflush(stdout);
@@ -842,6 +1059,19 @@ int main(int argc, char **argv) {{
   int reps = argc > 3 ? atoi(argv[3]) : 5;
   const char *output_path = argc > 4 ? argv[4] : "output_torchmlir.bin";
 
+  char run_id_buf[64];
+  resolve_run_id(argc, argv, run_id_buf, sizeof(run_id_buf));
+  const char *run_id = run_id_buf;
+
+  char json_path_buf[512];
+  const char *json_report_path;
+  if (argc > 6) {{
+    json_report_path = argv[6];
+  }} else {{
+    snprintf(json_path_buf, sizeof(json_path_buf), "{name}_{variant_name}_%s_timing.json", run_id);
+    json_report_path = json_path_buf;
+  }}
+
   FILE *wf = fopen(weights_path, "rb");
   if (!wf) {{
     fprintf(stderr, "failed to open weights file '%s': ", weights_path);
@@ -868,11 +1098,25 @@ int main(int argc, char **argv) {{
 
   printf("input loaded.\\n");
   fflush(stdout);
-  double *times = (double *)malloc(reps * sizeof(double));
+  const int use_fork = driver_fork_enabled();
+  double *times = use_fork ? alloc_shared_times(reps)
+                           : (double *)malloc(reps * sizeof(double));
+  printf("call isolation: %s\\n", use_fork ? "fork per call" : "in-process (DRIVER_NO_FORK)");
 
   printf("start warm-up (1 call)...\\n");
   fflush(stdout);
-  for (int i = 0; i < 1; i++) {{
+  if (use_fork) {{
+    fflush(NULL);
+    pid_t p = fork();
+    if (p < 0) {{ perror("fork"); return 1; }}
+    if (p == 0) {{
+      memref{out_rank}d out = {name}(
+          {call_args});
+      free(out.alloc);
+      _exit(0);
+    }}
+    await_child(p, "warm-up");
+  }} else {{
     memref{out_rank}d out = {name}(
         {call_args});
     free(out.alloc);
@@ -884,23 +1128,49 @@ int main(int argc, char **argv) {{
   int keep_out = 0;
   memref{out_rank}d out;
   for (int i = 0; i < reps; i++) {{
-    struct timespec t0, t1;
-    clock_gettime(CLOCK_MONOTONIC, &t0);
-    memref{out_rank}d cur = {name}(
-        {call_args});
-    clock_gettime(CLOCK_MONOTONIC, &t1);
-    times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
-               (double)(t1.tv_nsec - t0.tv_nsec);
-    if (keep_out)
-      free(out.alloc);
-    out = cur;
-    keep_out = 1;
+    const int is_last = (i == reps - 1);
+    if (use_fork) {{
+      fflush(NULL);
+      pid_t p = fork();
+      if (p < 0) {{ perror("fork"); return 1; }}
+      if (p == 0) {{
+        struct timespec t0, t1;
+        clock_gettime(CLOCK_MONOTONIC, &t0);
+        memref{out_rank}d cur = {name}(
+            {call_args});
+        clock_gettime(CLOCK_MONOTONIC, &t1);
+        times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
+                   (double)(t1.tv_nsec - t0.tv_nsec);
+        /* The last rep's child owns writing the result, so the output
+           buffer never has to cross the process boundary. */
+        if (is_last) {{
+          write_result(cur, output_path);
+          free(cur.alloc);
+        }}
+        _exit(0);
+      }}
+      await_child(p, "timed rep");
+    }} else {{
+      struct timespec t0, t1;
+      clock_gettime(CLOCK_MONOTONIC, &t0);
+      memref{out_rank}d cur = {name}(
+          {call_args});
+      clock_gettime(CLOCK_MONOTONIC, &t1);
+      times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
+                 (double)(t1.tv_nsec - t0.tv_nsec);
+      if (keep_out)
+        free(out.alloc);
+      out = cur;
+      keep_out = 1;
+    }}
   }}
   printf("finish timed reps...\\n");
   fflush(stdout);
 
-  write_result(out, output_path);
-  free(out.alloc);
+  if (!use_fork) {{
+    write_result(out, output_path);
+    free(out.alloc);
+  }}
 
   qsort(times, reps, sizeof(double), cmp_double);
   double sum = 0;
@@ -912,8 +1182,12 @@ int main(int argc, char **argv) {{
          weights_path, input_path, reps, times[reps / 2], sum / reps, times[0],
          times[reps - 1]);
 
+  write_timing_report(json_report_path, "{name}", "{variant_name}", run_id,
+                       weights_path, input_path, output_path, reps,
+                       times[reps / 2], sum / reps, times[0], times[reps - 1]);
+
   free({input_p.cname});
-  free(times);
+  release_times(times, reps, use_fork);
   return 0;
 }}
 """
@@ -931,6 +1205,7 @@ def process_file(ll_path, shape_sources, dry_run=False, force=False):
 
     sig = parse_signature(text, filename_hint=ll_path)
     dirpath = os.path.dirname(ll_path)
+    variant_name = os.path.basename(dirpath)
 
     if sig.style == "unknown":
         print(f"[SKIP] {ll_path}: unrecognized calling convention")
@@ -952,7 +1227,7 @@ def process_file(ll_path, shape_sources, dry_run=False, force=False):
         if not force and os.path.exists(out_path):
             print(f"    -> SKIP (already exists; use --force to overwrite)")
             return
-        src = generate_mim_driver(sig, input_idx)
+        src = generate_mim_driver(sig, input_idx, variant_name)
 
     elif sig.style == "mlir_memref":
         shape_sig = find_sibling_mlir_shape_source(ll_path, sig.name)
@@ -1005,6 +1280,7 @@ def process_file(ll_path, shape_sources, dry_run=False, force=False):
                 sig,
                 shape_sig,
                 input_idx,
+                variant_name,
                 source_desc=f"{source_kind} ({getattr(shape_sig, 'source_file', shape_sig.name)})",
             )
         except ValueError as e:
