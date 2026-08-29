@@ -1,0 +1,122 @@
+{
+  "model_dir": "05_AlexNet",
+  "model_name": "AlexNet",
+  "run_id": "20260828_224449",
+  "generated_at": "2026-08-29T05:12:06",
+  "reference_source": "torch:torch_ref/5_AlexNet.py",
+  "reps": 10,
+  "atol": 0.01,
+  "rtol": 0.001,
+  "output_shape": [
+    1024,
+    1000
+  ],
+  "timing_summary": {
+    "mim_llvm": {
+      "reps": 10,
+      "median_ns": 599752307230.0,
+      "mean_ns": 651399218981.6,
+      "min_ns": 589783151440.0,
+      "max_ns": 904156962816.0,
+      "median_ms": 599752.307,
+      "rel_median": 9.245
+    },
+    "mim_mlir_llvm": {
+      "reps": 10,
+      "median_ns": 65438719772.0,
+      "mean_ns": 66087189138.4,
+      "min_ns": 64587194375.0,
+      "max_ns": 69700604893.0,
+      "median_ms": 65438.72,
+      "rel_median": 1.009
+    },
+    "mlir_llvm": {
+      "reps": 10,
+      "median_ns": 64871565266.0,
+      "mean_ns": 65011418565.8,
+      "min_ns": 63549657422.0,
+      "max_ns": 67030484830.0,
+      "median_ms": 64871.565,
+      "rel_median": 1.0
+    }
+  },
+  "fastest_pipeline": "mlir_llvm",
+  "pipelines": {
+    "mim_llvm": {
+      "ref_mean_abs": 16501367111680.0,
+      "max_abs_diff": 276824064.0,
+      "mean_abs_diff": 38555812.0,
+      "max_rel_diff": 0.4196428656578064,
+      "max_diff_over_scale": 1.6775826225057244e-05,
+      "rms_diff_over_scale": 2.9358193387452047e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0016181640625,
+      "allclose": true,
+      "top1_match": "1024/1024",
+      "status": "PASS",
+      "timing": {
+        "model": "AlexNet",
+        "pipeline": "mim_llvm",
+        "run_id": "20260828_224449",
+        "weights_path": "./05_AlexNet/AlexNet_weights.bin",
+        "input_path": "./05_AlexNet/AlexNet_input.bin",
+        "output_path": "./05_AlexNet/outputs/output_mim_llvm.bin",
+        "reps": 10,
+        "median_ns": 599752307230.0,
+        "mean_ns": 651399218981.6,
+        "min_ns": 589783151440.0,
+        "max_ns": 904156962816.0
+      }
+    },
+    "mim_mlir_llvm": {
+      "ref_mean_abs": 16501367111680.0,
+      "max_abs_diff": 276824064.0,
+      "mean_abs_diff": 38555812.0,
+      "max_rel_diff": 0.4196428656578064,
+      "max_diff_over_scale": 1.6775826225057244e-05,
+      "rms_diff_over_scale": 2.9358193387452047e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0016181640625,
+      "allclose": true,
+      "top1_match": "1024/1024",
+      "status": "PASS",
+      "timing": {
+        "model": "AlexNet",
+        "pipeline": "mim_mlir_llvm",
+        "run_id": "20260828_224449",
+        "weights_path": "./05_AlexNet/AlexNet_weights.bin",
+        "input_path": "./05_AlexNet/AlexNet_input.bin",
+        "output_path": "./05_AlexNet/outputs/output_mim_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 65438719772.0,
+        "mean_ns": 66087189138.4,
+        "min_ns": 64587194375.0,
+        "max_ns": 69700604893.0
+      }
+    },
+    "mlir_llvm": {
+      "ref_mean_abs": 16501367111680.0,
+      "max_abs_diff": 243269632.0,
+      "mean_abs_diff": 38523604.0,
+      "max_rel_diff": 0.3551805317401886,
+      "max_diff_over_scale": 1.474239252274856e-05,
+      "rms_diff_over_scale": 2.9340371838770807e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0016416015625,
+      "allclose": true,
+      "top1_match": "1024/1024",
+      "status": "PASS",
+      "timing": {
+        "model": "AlexNet",
+        "pipeline": "mlir_llvm",
+        "run_id": "20260828_224449",
+        "weights_path": "./05_AlexNet/AlexNet_weights.bin",
+        "input_path": "./05_AlexNet/AlexNet_input.bin",
+        "output_path": "./05_AlexNet/outputs/output_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 64871565266.0,
+        "mean_ns": 65011418565.8,
+        "min_ns": 63549657422.0,
+        "max_ns": 67030484830.0
+      }
+    }
+  },
+  "all_pass": true
+}

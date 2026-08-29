@@ -1,10 +1,12 @@
 module {
   func.func public @LeNet5(%l_self_modules_conv1_parameters_weight_: tensor<6x5x5xf32>, %l_self_modules_conv1_parameters_bias_: tensor<6xf32>, %l_x_: tensor<4096x32x32xf32>, %l_self_modules_conv2_parameters_weight_: tensor<16x6x5x5xf32>, %l_self_modules_conv2_parameters_bias_: tensor<16xf32>, %l_self_modules_fc1_parameters_weight_: tensor<120x400xf32>, %l_self_modules_fc1_parameters_bias_: tensor<120xf32>, %l_self_modules_fc2_parameters_weight_: tensor<84x120xf32>, %l_self_modules_fc2_parameters_bias_: tensor<84xf32>, %l_self_modules_fc3_parameters_weight_: tensor<20x84xf32>, %l_self_modules_fc3_parameters_bias_: tensor<20xf32>) -> tensor<4096x20xf32> {
+    %l_x_.expanded = tensor.expand_shape %l_x_ [[0], [1, 2], [3]] output_shape [4096, 1, 32, 32] : tensor<4096x32x32xf32> into tensor<4096x1x32x32xf32>
+    %l_self_modules_conv1_parameters_weight_.expanded = tensor.expand_shape %l_self_modules_conv1_parameters_weight_ [[0], [1, 2], [3]] output_shape [6, 1, 5, 5] : tensor<6x5x5xf32> into tensor<6x1x5x5xf32>
     %v0.empty = tensor.empty() : tensor<4096x6x28x28xf32>
     %v1 = arith.constant 0.0 : f32
     %v0.buf = linalg.fill ins(%v1 : f32) outs(%v0.empty : tensor<4096x6x28x28xf32>) -> tensor<4096x6x28x28xf32>
     %v0.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d4, d2 + d5, d3 + d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d1, d4, d5, d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d1, d2, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction", "reduction", "reduction"]}
-      ins(%l_x_, %l_self_modules_conv1_parameters_weight_ : tensor<4096x32x32xf32>, tensor<6x5x5xf32>)
+      ins(%l_x_.expanded, %l_self_modules_conv1_parameters_weight_.expanded : tensor<4096x1x32x32xf32>, tensor<6x1x5x5xf32>)
       outs(%v0.buf : tensor<4096x6x28x28xf32>) {
         ^bb0(%in_2: f32, %in_3: f32, %acc_4: f32):
           %v5 = arith.mulf %in_2, %in_3 : f32

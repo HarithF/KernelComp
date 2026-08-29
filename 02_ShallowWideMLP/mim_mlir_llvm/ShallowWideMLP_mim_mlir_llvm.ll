@@ -3,7 +3,7 @@ source_filename = "LLVMDialectModule"
 
 declare void @free(ptr)
 
-declare ptr @malloc(i64)
+declare ptr @aligned_alloc(i64, i64)
 
 define { ptr, ptr, i64, [2 x i64], [2 x i64] } @ShallowWideMLP(ptr %0, ptr %1, i64 %2, i64 %3, i64 %4, i64 %5, i64 %6, ptr %7, ptr %8, i64 %9, i64 %10, i64 %11, ptr %12, ptr %13, i64 %14, i64 %15, i64 %16, i64 %17, i64 %18, ptr %19, ptr %20, i64 %21, i64 %22, i64 %23, i64 %24, i64 %25, ptr %26, ptr %27, i64 %28, i64 %29, i64 %30, ptr %31, ptr %32, i64 %33, i64 %34, i64 %35, i64 %36, i64 %37, ptr %38, ptr %39, i64 %40, i64 %41, i64 %42) {
   %44 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } poison, ptr %38, 0
@@ -49,1573 +49,1087 @@ define { ptr, ptr, i64, [2 x i64], [2 x i64] } @ShallowWideMLP(ptr %0, ptr %1, i
   %84 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %83, i64 %5, 4, 0
   %85 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %84, i64 %4, 3, 1
   %86 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %85, i64 %6, 4, 1
-  %87 = call ptr @malloc(i64 2147483712)
-  %88 = ptrtoint ptr %87 to i64
-  %89 = add i64 %88, 63
-  %90 = urem i64 %89, 64
-  %91 = sub i64 %89, %90
-  %92 = inttoptr i64 %91 to ptr
-  %93 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %87, 0
-  %94 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %93, ptr %92, 1
-  %95 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %94, i64 0, 2
-  %96 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %95, i64 16384, 3, 0
-  %97 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %96, i64 32768, 3, 1
-  %98 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %97, i64 32768, 4, 0
-  %99 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %98, i64 1, 4, 1
-  br label %100
+  %87 = call ptr @aligned_alloc(i64 64, i64 2147483648)
+  %88 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %87, 0
+  %89 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %88, ptr %87, 1
+  %90 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %89, i64 0, 2
+  %91 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %90, i64 16384, 3, 0
+  %92 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %91, i64 32768, 3, 1
+  %93 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %92, i64 32768, 4, 0
+  %94 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %93, i64 1, 4, 1
+  br label %95
 
-100:                                              ; preds = %132, %43
-  %101 = phi i64 [ %133, %132 ], [ 0, %43 ]
-  %102 = icmp slt i64 %101, 16384
-  br i1 %102, label %103, label %134
+95:                                               ; preds = %113, %43
+  %96 = phi i64 [ %114, %113 ], [ 0, %43 ]
+  %97 = icmp slt i64 %96, 16384
+  br i1 %97, label %98, label %115
 
-103:                                              ; preds = %100
-  br label %104
+98:                                               ; preds = %95
+  br label %99
 
-104:                                              ; preds = %130, %103
-  %105 = phi i64 [ %131, %130 ], [ 0, %103 ]
-  %106 = icmp slt i64 %105, 32768
-  br i1 %106, label %107, label %132
+99:                                               ; preds = %102, %98
+  %100 = phi i64 [ %112, %102 ], [ 0, %98 ]
+  %101 = icmp slt i64 %100, 32768
+  br i1 %101, label %102, label %113
 
-107:                                              ; preds = %104
-  %108 = add i64 %101, 32
-  br label %109
+102:                                              ; preds = %99
+  %103 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %86, 1
+  %104 = mul nuw nsw i64 %100, 16384
+  %105 = add nuw nsw i64 %104, %96
+  %106 = getelementptr inbounds nuw float, ptr %103, i64 %105
+  %107 = load float, ptr %106, align 4
+  %108 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %94, 1
+  %109 = mul nuw nsw i64 %96, 32768
+  %110 = add nuw nsw i64 %109, %100
+  %111 = getelementptr inbounds nuw float, ptr %108, i64 %110
+  store float %107, ptr %111, align 4
+  %112 = add i64 %100, 1
+  br label %99
 
-109:                                              ; preds = %128, %107
-  %110 = phi i64 [ %129, %128 ], [ %101, %107 ]
-  %111 = icmp slt i64 %110, %108
-  br i1 %111, label %112, label %130
+113:                                              ; preds = %99
+  %114 = add i64 %96, 1
+  br label %95
 
-112:                                              ; preds = %109
-  %113 = add i64 %105, 32
-  br label %114
+115:                                              ; preds = %95
+  %116 = call ptr @aligned_alloc(i64 64, i64 16777216)
+  %117 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %116, 0
+  %118 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %117, ptr %116, 1
+  %119 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %118, i64 0, 2
+  %120 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %119, i64 128, 3, 0
+  %121 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %120, i64 32768, 3, 1
+  %122 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %121, i64 32768, 4, 0
+  %123 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %122, i64 1, 4, 1
+  %124 = call ptr @aligned_alloc(i64 64, i64 16777216)
+  %125 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %124, 0
+  %126 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %125, ptr %124, 1
+  %127 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %126, i64 0, 2
+  %128 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %127, i64 128, 3, 0
+  %129 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %128, i64 32768, 3, 1
+  %130 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %129, i64 32768, 4, 0
+  %131 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %130, i64 1, 4, 1
+  br label %132
 
-114:                                              ; preds = %117, %112
-  %115 = phi i64 [ %127, %117 ], [ %105, %112 ]
-  %116 = icmp slt i64 %115, %113
-  br i1 %116, label %117, label %128
+132:                                              ; preds = %145, %115
+  %133 = phi i64 [ %146, %145 ], [ 0, %115 ]
+  %134 = icmp slt i64 %133, 128
+  br i1 %134, label %135, label %147
 
-117:                                              ; preds = %114
-  %118 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %86, 1
-  %119 = mul nuw nsw i64 %115, 16384
-  %120 = add nuw nsw i64 %119, %110
-  %121 = getelementptr inbounds nuw float, ptr %118, i64 %120
-  %122 = load float, ptr %121, align 4
-  %123 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %99, 1
-  %124 = mul nuw nsw i64 %110, 32768
-  %125 = add nuw nsw i64 %124, %115
-  %126 = getelementptr inbounds nuw float, ptr %123, i64 %125
-  store float %122, ptr %126, align 4
-  %127 = add i64 %115, 1
-  br label %114
+135:                                              ; preds = %132
+  br label %136
 
-128:                                              ; preds = %114
-  %129 = add i64 %110, 1
-  br label %109
+136:                                              ; preds = %139, %135
+  %137 = phi i64 [ %144, %139 ], [ 0, %135 ]
+  %138 = icmp slt i64 %137, 32768
+  br i1 %138, label %139, label %145
 
-130:                                              ; preds = %109
-  %131 = add i64 %105, 32
-  br label %104
+139:                                              ; preds = %136
+  %140 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 1
+  %141 = mul nuw nsw i64 %133, 32768
+  %142 = add nuw nsw i64 %141, %137
+  %143 = getelementptr inbounds nuw float, ptr %140, i64 %142
+  store float 0.000000e+00, ptr %143, align 4
+  %144 = add i64 %137, 1
+  br label %136
 
-132:                                              ; preds = %104
-  %133 = add i64 %101, 32
-  br label %100
+145:                                              ; preds = %136
+  %146 = add i64 %133, 1
+  br label %132
 
-134:                                              ; preds = %100
-  %135 = call ptr @malloc(i64 16777280)
-  %136 = ptrtoint ptr %135 to i64
-  %137 = add i64 %136, 63
-  %138 = urem i64 %137, 64
-  %139 = sub i64 %137, %138
-  %140 = inttoptr i64 %139 to ptr
-  %141 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %135, 0
-  %142 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %141, ptr %140, 1
-  %143 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %142, i64 0, 2
-  %144 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %143, i64 128, 3, 0
-  %145 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %144, i64 32768, 3, 1
-  %146 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %145, i64 32768, 4, 0
-  %147 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %146, i64 1, 4, 1
-  br label %148
+147:                                              ; preds = %132
+  %148 = call ptr @aligned_alloc(i64 64, i64 16777216)
+  %149 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %148, 0
+  %150 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %149, ptr %148, 1
+  %151 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %150, i64 0, 2
+  %152 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %151, i64 128, 3, 0
+  %153 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %152, i64 32768, 3, 1
+  %154 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %153, i64 32768, 4, 0
+  %155 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %154, i64 1, 4, 1
+  %156 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 3, 0
+  %157 = mul i64 1, %156
+  %158 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 3, 1
+  %159 = mul i64 %157, %158
+  %160 = mul i64 %159, 4
+  %161 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 1
+  %162 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 2
+  %163 = getelementptr float, ptr %161, i64 %162
+  %164 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %155, 1
+  %165 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %155, 2
+  %166 = getelementptr float, ptr %164, i64 %165
+  call void @llvm.memcpy.p0.p0.i64(ptr %166, ptr %163, i64 %160, i1 false)
+  br label %167
 
-148:                                              ; preds = %175, %134
-  %149 = phi i64 [ %176, %175 ], [ 0, %134 ]
-  %150 = icmp slt i64 %149, 128
-  br i1 %150, label %151, label %177
+167:                                              ; preds = %272, %147
+  %168 = phi i64 [ %273, %272 ], [ 0, %147 ]
+  %169 = icmp slt i64 %168, 128
+  br i1 %169, label %170, label %274
 
-151:                                              ; preds = %148
-  br label %152
+170:                                              ; preds = %167
+  br label %171
 
-152:                                              ; preds = %173, %151
-  %153 = phi i64 [ %174, %173 ], [ 0, %151 ]
-  %154 = icmp slt i64 %153, 32768
-  br i1 %154, label %155, label %175
+171:                                              ; preds = %270, %170
+  %172 = phi i64 [ %271, %270 ], [ 0, %170 ]
+  %173 = icmp slt i64 %172, 32768
+  br i1 %173, label %174, label %272
 
-155:                                              ; preds = %152
-  %156 = add i64 %149, 32
-  br label %157
+174:                                              ; preds = %171
+  br label %175
 
-157:                                              ; preds = %171, %155
-  %158 = phi i64 [ %172, %171 ], [ %149, %155 ]
-  %159 = icmp slt i64 %158, %156
-  br i1 %159, label %160, label %173
+175:                                              ; preds = %268, %174
+  %176 = phi i64 [ %269, %268 ], [ 0, %174 ]
+  %177 = icmp slt i64 %176, 16384
+  br i1 %177, label %178, label %270
 
-160:                                              ; preds = %157
-  %161 = add i64 %153, 32
-  br label %162
+178:                                              ; preds = %175
+  %179 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 0
+  %180 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 1
+  %181 = insertvalue { ptr, ptr, i64 } poison, ptr %179, 0
+  %182 = insertvalue { ptr, ptr, i64 } %181, ptr %180, 1
+  %183 = insertvalue { ptr, ptr, i64 } %182, i64 0, 2
+  %184 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 2
+  %185 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 3, 0
+  %186 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 3, 1
+  %187 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 4, 0
+  %188 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 4, 1
+  %189 = mul nsw i64 %168, 16384
+  %190 = add i64 %189, %176
+  %191 = extractvalue { ptr, ptr, i64 } %183, 0
+  %192 = extractvalue { ptr, ptr, i64 } %183, 1
+  %193 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %191, 0
+  %194 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %193, ptr %192, 1
+  %195 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %194, i64 %190, 2
+  %196 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %195, i64 32, 3, 0
+  %197 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %196, i64 16384, 4, 0
+  %198 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %197, i64 32, 3, 1
+  %199 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %198, i64 1, 4, 1
+  %200 = mul nsw i64 %176, 32768
+  %201 = add i64 %200, %172
+  %202 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %94, 0
+  %203 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %94, 1
+  %204 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %202, 0
+  %205 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %204, ptr %203, 1
+  %206 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %205, i64 %201, 2
+  %207 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %206, i64 32, 3, 0
+  %208 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %207, i64 32768, 4, 0
+  %209 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %208, i64 32, 3, 1
+  %210 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %209, i64 1, 4, 1
+  %211 = mul nsw i64 %168, 32768
+  %212 = add i64 %211, %172
+  %213 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %155, 0
+  %214 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %155, 1
+  %215 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %213, 0
+  %216 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %215, ptr %214, 1
+  %217 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %216, i64 %212, 2
+  %218 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %217, i64 32, 3, 0
+  %219 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %218, i64 32768, 4, 0
+  %220 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %219, i64 32, 3, 1
+  %221 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %220, i64 1, 4, 1
+  br label %222
 
-162:                                              ; preds = %165, %160
-  %163 = phi i64 [ %170, %165 ], [ %153, %160 ]
-  %164 = icmp slt i64 %163, %161
-  br i1 %164, label %165, label %171
+222:                                              ; preds = %266, %178
+  %223 = phi i64 [ %267, %266 ], [ 0, %178 ]
+  %224 = icmp slt i64 %223, 32
+  br i1 %224, label %225, label %268
 
-165:                                              ; preds = %162
-  %166 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %147, 1
-  %167 = mul nuw nsw i64 %158, 32768
-  %168 = add nuw nsw i64 %167, %163
-  %169 = getelementptr inbounds nuw float, ptr %166, i64 %168
-  store float 0.000000e+00, ptr %169, align 4
-  %170 = add i64 %163, 1
-  br label %162
+225:                                              ; preds = %222
+  br label %226
 
-171:                                              ; preds = %162
-  %172 = add i64 %158, 1
-  br label %157
+226:                                              ; preds = %264, %225
+  %227 = phi i64 [ %265, %264 ], [ 0, %225 ]
+  %228 = icmp slt i64 %227, 32
+  br i1 %228, label %229, label %266
 
-173:                                              ; preds = %157
-  %174 = add i64 %153, 32
-  br label %152
+229:                                              ; preds = %226
+  br label %230
 
-175:                                              ; preds = %152
-  %176 = add i64 %149, 32
-  br label %148
+230:                                              ; preds = %233, %229
+  %231 = phi i64 [ %263, %233 ], [ 0, %229 ]
+  %232 = icmp slt i64 %231, 32
+  br i1 %232, label %233, label %264
 
-177:                                              ; preds = %148
-  br label %178
+233:                                              ; preds = %230
+  %234 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %199, 1
+  %235 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %199, 2
+  %236 = getelementptr float, ptr %234, i64 %235
+  %237 = mul nuw nsw i64 %223, 16384
+  %238 = add nuw nsw i64 %237, %231
+  %239 = getelementptr inbounds nuw float, ptr %236, i64 %238
+  %240 = load float, ptr %239, align 4
+  %241 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %210, 1
+  %242 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %210, 2
+  %243 = getelementptr float, ptr %241, i64 %242
+  %244 = mul nuw nsw i64 %231, 32768
+  %245 = add nuw nsw i64 %244, %227
+  %246 = getelementptr inbounds nuw float, ptr %243, i64 %245
+  %247 = load float, ptr %246, align 4
+  %248 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %221, 1
+  %249 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %221, 2
+  %250 = getelementptr float, ptr %248, i64 %249
+  %251 = mul nuw nsw i64 %223, 32768
+  %252 = add nuw nsw i64 %251, %227
+  %253 = getelementptr inbounds nuw float, ptr %250, i64 %252
+  %254 = load float, ptr %253, align 4
+  %255 = fmul float %240, %247
+  %256 = fadd float %255, %254
+  %257 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %221, 1
+  %258 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %221, 2
+  %259 = getelementptr float, ptr %257, i64 %258
+  %260 = mul nuw nsw i64 %223, 32768
+  %261 = add nuw nsw i64 %260, %227
+  %262 = getelementptr inbounds nuw float, ptr %259, i64 %261
+  store float %256, ptr %262, align 4
+  %263 = add i64 %231, 1
+  br label %230
 
-178:                                              ; preds = %235, %177
-  %179 = phi i64 [ %236, %235 ], [ 0, %177 ]
-  %180 = icmp slt i64 %179, 128
-  br i1 %180, label %181, label %237
+264:                                              ; preds = %230
+  %265 = add i64 %227, 1
+  br label %226
 
-181:                                              ; preds = %178
-  br label %182
+266:                                              ; preds = %226
+  %267 = add i64 %223, 1
+  br label %222
 
-182:                                              ; preds = %233, %181
-  %183 = phi i64 [ %234, %233 ], [ 0, %181 ]
-  %184 = icmp slt i64 %183, 32768
-  br i1 %184, label %185, label %235
+268:                                              ; preds = %222
+  %269 = add i64 %176, 32
+  br label %175
 
-185:                                              ; preds = %182
-  %186 = add i64 %179, 32
-  br label %187
+270:                                              ; preds = %175
+  %271 = add i64 %172, 32
+  br label %171
 
-187:                                              ; preds = %231, %185
-  %188 = phi i64 [ %232, %231 ], [ %179, %185 ]
-  %189 = icmp slt i64 %188, %186
-  br i1 %189, label %190, label %233
+272:                                              ; preds = %171
+  %273 = add i64 %168, 32
+  br label %167
 
-190:                                              ; preds = %187
-  %191 = add i64 %183, 32
-  br label %192
+274:                                              ; preds = %167
+  %275 = call ptr @aligned_alloc(i64 64, i64 131072)
+  %276 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %275, 0
+  %277 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %276, ptr %275, 1
+  %278 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %277, i64 0, 2
+  %279 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %278, i64 1, 3, 0
+  %280 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %279, i64 32768, 3, 1
+  %281 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %280, i64 32768, 4, 0
+  %282 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %281, i64 1, 4, 1
+  br label %283
 
-192:                                              ; preds = %229, %190
-  %193 = phi i64 [ %230, %229 ], [ %183, %190 ]
-  %194 = icmp slt i64 %193, %191
-  br i1 %194, label %195, label %231
+283:                                              ; preds = %299, %274
+  %284 = phi i64 [ %300, %299 ], [ 0, %274 ]
+  %285 = icmp slt i64 %284, 1
+  br i1 %285, label %286, label %301
 
-195:                                              ; preds = %192
-  br label %196
+286:                                              ; preds = %283
+  br label %287
 
-196:                                              ; preds = %227, %195
-  %197 = phi i64 [ %228, %227 ], [ 0, %195 ]
-  %198 = icmp slt i64 %197, 16384
-  br i1 %198, label %199, label %229
+287:                                              ; preds = %290, %286
+  %288 = phi i64 [ %298, %290 ], [ 0, %286 ]
+  %289 = icmp slt i64 %288, 32768
+  br i1 %289, label %290, label %299
 
-199:                                              ; preds = %196
-  %200 = add i64 %197, 32
-  br label %201
+290:                                              ; preds = %287
+  %291 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %79, 1
+  %292 = getelementptr inbounds nuw float, ptr %291, i64 %288
+  %293 = load float, ptr %292, align 4
+  %294 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %282, 1
+  %295 = mul nuw nsw i64 %284, 32768
+  %296 = add nuw nsw i64 %295, %288
+  %297 = getelementptr inbounds nuw float, ptr %294, i64 %296
+  store float %293, ptr %297, align 4
+  %298 = add i64 %288, 1
+  br label %287
 
-201:                                              ; preds = %204, %199
-  %202 = phi i64 [ %226, %204 ], [ %197, %199 ]
-  %203 = icmp slt i64 %202, %200
-  br i1 %203, label %204, label %227
+299:                                              ; preds = %287
+  %300 = add i64 %284, 1
+  br label %283
 
-204:                                              ; preds = %201
-  %205 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %74, 1
-  %206 = mul nuw nsw i64 %188, 16384
-  %207 = add nuw nsw i64 %206, %202
-  %208 = getelementptr inbounds nuw float, ptr %205, i64 %207
-  %209 = load float, ptr %208, align 4
-  %210 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %99, 1
-  %211 = mul nuw nsw i64 %202, 32768
-  %212 = add nuw nsw i64 %211, %193
-  %213 = getelementptr inbounds nuw float, ptr %210, i64 %212
-  %214 = load float, ptr %213, align 4
-  %215 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %147, 1
-  %216 = mul nuw nsw i64 %188, 32768
-  %217 = add nuw nsw i64 %216, %193
-  %218 = getelementptr inbounds nuw float, ptr %215, i64 %217
-  %219 = load float, ptr %218, align 4
-  %220 = fmul float %209, %214
-  %221 = fadd float %220, %219
-  %222 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %147, 1
-  %223 = mul nuw nsw i64 %188, 32768
-  %224 = add nuw nsw i64 %223, %193
-  %225 = getelementptr inbounds nuw float, ptr %222, i64 %224
-  store float %221, ptr %225, align 4
-  %226 = add i64 %202, 1
-  br label %201
+301:                                              ; preds = %283
+  br label %302
 
-227:                                              ; preds = %201
-  %228 = add i64 %197, 32
-  br label %196
+302:                                              ; preds = %319, %301
+  %303 = phi i64 [ %320, %319 ], [ 0, %301 ]
+  %304 = icmp slt i64 %303, 128
+  br i1 %304, label %305, label %321
 
-229:                                              ; preds = %196
-  %230 = add i64 %193, 1
-  br label %192
-
-231:                                              ; preds = %192
-  %232 = add i64 %188, 1
-  br label %187
-
-233:                                              ; preds = %187
-  %234 = add i64 %183, 32
-  br label %182
-
-235:                                              ; preds = %182
-  %236 = add i64 %179, 32
-  br label %178
-
-237:                                              ; preds = %178
-  %238 = call ptr @malloc(i64 131136)
-  %239 = ptrtoint ptr %238 to i64
-  %240 = add i64 %239, 63
-  %241 = urem i64 %240, 64
-  %242 = sub i64 %240, %241
-  %243 = inttoptr i64 %242 to ptr
-  %244 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %238, 0
-  %245 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %244, ptr %243, 1
-  %246 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %245, i64 0, 2
-  %247 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %246, i64 1, 3, 0
-  %248 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %247, i64 32768, 3, 1
-  %249 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %248, i64 32768, 4, 0
-  %250 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %249, i64 1, 4, 1
-  br label %251
-
-251:                                              ; preds = %281, %237
-  %252 = phi i64 [ %282, %281 ], [ 0, %237 ]
-  %253 = icmp slt i64 %252, 1
-  br i1 %253, label %254, label %283
-
-254:                                              ; preds = %251
-  br label %255
-
-255:                                              ; preds = %279, %254
-  %256 = phi i64 [ %280, %279 ], [ 0, %254 ]
-  %257 = icmp slt i64 %256, 32768
-  br i1 %257, label %258, label %281
-
-258:                                              ; preds = %255
-  %259 = add i64 %252, 1
-  br label %260
-
-260:                                              ; preds = %277, %258
-  %261 = phi i64 [ %278, %277 ], [ %252, %258 ]
-  %262 = icmp slt i64 %261, %259
-  br i1 %262, label %263, label %279
-
-263:                                              ; preds = %260
-  %264 = add i64 %256, 32
-  br label %265
-
-265:                                              ; preds = %268, %263
-  %266 = phi i64 [ %276, %268 ], [ %256, %263 ]
-  %267 = icmp slt i64 %266, %264
-  br i1 %267, label %268, label %277
-
-268:                                              ; preds = %265
-  %269 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %79, 1
-  %270 = getelementptr inbounds nuw float, ptr %269, i64 %266
-  %271 = load float, ptr %270, align 4
-  %272 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %250, 1
-  %273 = mul nuw nsw i64 %261, 32768
-  %274 = add nuw nsw i64 %273, %266
-  %275 = getelementptr inbounds nuw float, ptr %272, i64 %274
-  store float %271, ptr %275, align 4
-  %276 = add i64 %266, 1
-  br label %265
-
-277:                                              ; preds = %265
-  %278 = add i64 %261, 1
-  br label %260
-
-279:                                              ; preds = %260
-  %280 = add i64 %256, 32
-  br label %255
-
-281:                                              ; preds = %255
-  %282 = add i64 %252, 32
-  br label %251
-
-283:                                              ; preds = %251
-  %284 = call ptr @malloc(i64 16777280)
-  %285 = ptrtoint ptr %284 to i64
-  %286 = add i64 %285, 63
-  %287 = urem i64 %286, 64
-  %288 = sub i64 %286, %287
-  %289 = inttoptr i64 %288 to ptr
-  %290 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %284, 0
-  %291 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %290, ptr %289, 1
-  %292 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %291, i64 0, 2
-  %293 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %292, i64 128, 3, 0
-  %294 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %293, i64 32768, 3, 1
-  %295 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %294, i64 32768, 4, 0
-  %296 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %295, i64 1, 4, 1
-  br label %297
-
-297:                                              ; preds = %328, %283
-  %298 = phi i64 [ %329, %328 ], [ 0, %283 ]
-  %299 = icmp slt i64 %298, 128
-  br i1 %299, label %300, label %330
-
-300:                                              ; preds = %297
-  br label %301
-
-301:                                              ; preds = %326, %300
-  %302 = phi i64 [ %327, %326 ], [ 0, %300 ]
-  %303 = icmp slt i64 %302, 32768
-  br i1 %303, label %304, label %328
-
-304:                                              ; preds = %301
-  %305 = add i64 %298, 32
+305:                                              ; preds = %302
   br label %306
 
-306:                                              ; preds = %324, %304
-  %307 = phi i64 [ %325, %324 ], [ %298, %304 ]
-  %308 = icmp slt i64 %307, %305
-  br i1 %308, label %309, label %326
+306:                                              ; preds = %309, %305
+  %307 = phi i64 [ %318, %309 ], [ 0, %305 ]
+  %308 = icmp slt i64 %307, 32768
+  br i1 %308, label %309, label %319
 
 309:                                              ; preds = %306
-  %310 = add i64 %302, 32
-  br label %311
-
-311:                                              ; preds = %314, %309
-  %312 = phi i64 [ %323, %314 ], [ %302, %309 ]
-  %313 = icmp slt i64 %312, %310
-  br i1 %313, label %314, label %324
-
-314:                                              ; preds = %311
-  %315 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %250, 1
-  %316 = add nuw nsw i64 0, %312
-  %317 = getelementptr inbounds nuw float, ptr %315, i64 %316
-  %318 = load float, ptr %317, align 4
-  %319 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %296, 1
-  %320 = mul nuw nsw i64 %307, 32768
-  %321 = add nuw nsw i64 %320, %312
-  %322 = getelementptr inbounds nuw float, ptr %319, i64 %321
-  store float %318, ptr %322, align 4
-  %323 = add i64 %312, 1
-  br label %311
-
-324:                                              ; preds = %311
-  %325 = add i64 %307, 1
+  %310 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %282, 1
+  %311 = add nuw nsw i64 0, %307
+  %312 = getelementptr inbounds nuw float, ptr %310, i64 %311
+  %313 = load float, ptr %312, align 4
+  %314 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %315 = mul nuw nsw i64 %303, 32768
+  %316 = add nuw nsw i64 %315, %307
+  %317 = getelementptr inbounds nuw float, ptr %314, i64 %316
+  store float %313, ptr %317, align 4
+  %318 = add i64 %307, 1
   br label %306
 
-326:                                              ; preds = %306
-  %327 = add i64 %302, 32
-  br label %301
+319:                                              ; preds = %306
+  %320 = add i64 %303, 1
+  br label %302
 
-328:                                              ; preds = %301
-  %329 = add i64 %298, 32
-  br label %297
+321:                                              ; preds = %302
+  br label %322
 
-330:                                              ; preds = %297
-  %331 = call ptr @malloc(i64 16777280)
-  %332 = ptrtoint ptr %331 to i64
-  %333 = add i64 %332, 63
-  %334 = urem i64 %333, 64
-  %335 = sub i64 %333, %334
-  %336 = inttoptr i64 %335 to ptr
-  %337 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %331, 0
-  %338 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %337, ptr %336, 1
-  %339 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %338, i64 0, 2
-  %340 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %339, i64 128, 3, 0
-  %341 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %340, i64 32768, 3, 1
-  %342 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %341, i64 32768, 4, 0
-  %343 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %342, i64 1, 4, 1
-  br label %344
+322:                                              ; preds = %346, %321
+  %323 = phi i64 [ %347, %346 ], [ 0, %321 ]
+  %324 = icmp slt i64 %323, 128
+  br i1 %324, label %325, label %348
 
-344:                                              ; preds = %382, %330
-  %345 = phi i64 [ %383, %382 ], [ 0, %330 ]
-  %346 = icmp slt i64 %345, 128
-  br i1 %346, label %347, label %384
+325:                                              ; preds = %322
+  br label %326
 
-347:                                              ; preds = %344
-  br label %348
+326:                                              ; preds = %329, %325
+  %327 = phi i64 [ %345, %329 ], [ 0, %325 ]
+  %328 = icmp slt i64 %327, 32768
+  br i1 %328, label %329, label %346
 
-348:                                              ; preds = %380, %347
-  %349 = phi i64 [ %381, %380 ], [ 0, %347 ]
-  %350 = icmp slt i64 %349, 32768
-  br i1 %350, label %351, label %382
+329:                                              ; preds = %326
+  %330 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %155, 1
+  %331 = mul nuw nsw i64 %323, 32768
+  %332 = add nuw nsw i64 %331, %327
+  %333 = getelementptr inbounds nuw float, ptr %330, i64 %332
+  %334 = load float, ptr %333, align 4
+  %335 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %336 = mul nuw nsw i64 %323, 32768
+  %337 = add nuw nsw i64 %336, %327
+  %338 = getelementptr inbounds nuw float, ptr %335, i64 %337
+  %339 = load float, ptr %338, align 4
+  %340 = fadd float %334, %339
+  %341 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %342 = mul nuw nsw i64 %323, 32768
+  %343 = add nuw nsw i64 %342, %327
+  %344 = getelementptr inbounds nuw float, ptr %341, i64 %343
+  store float %340, ptr %344, align 4
+  %345 = add i64 %327, 1
+  br label %326
 
-351:                                              ; preds = %348
-  %352 = add i64 %345, 32
+346:                                              ; preds = %326
+  %347 = add i64 %323, 1
+  br label %322
+
+348:                                              ; preds = %322
+  br label %349
+
+349:                                              ; preds = %368, %348
+  %350 = phi i64 [ %369, %368 ], [ 0, %348 ]
+  %351 = icmp slt i64 %350, 128
+  br i1 %351, label %352, label %370
+
+352:                                              ; preds = %349
   br label %353
 
-353:                                              ; preds = %378, %351
-  %354 = phi i64 [ %379, %378 ], [ %345, %351 ]
-  %355 = icmp slt i64 %354, %352
-  br i1 %355, label %356, label %380
+353:                                              ; preds = %356, %352
+  %354 = phi i64 [ %367, %356 ], [ 0, %352 ]
+  %355 = icmp slt i64 %354, 32768
+  br i1 %355, label %356, label %368
 
 356:                                              ; preds = %353
-  %357 = add i64 %349, 32
-  br label %358
-
-358:                                              ; preds = %361, %356
-  %359 = phi i64 [ %377, %361 ], [ %349, %356 ]
-  %360 = icmp slt i64 %359, %357
-  br i1 %360, label %361, label %378
-
-361:                                              ; preds = %358
-  %362 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %147, 1
-  %363 = mul nuw nsw i64 %354, 32768
-  %364 = add nuw nsw i64 %363, %359
-  %365 = getelementptr inbounds nuw float, ptr %362, i64 %364
-  %366 = load float, ptr %365, align 4
-  %367 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %296, 1
-  %368 = mul nuw nsw i64 %354, 32768
-  %369 = add nuw nsw i64 %368, %359
-  %370 = getelementptr inbounds nuw float, ptr %367, i64 %369
-  %371 = load float, ptr %370, align 4
-  %372 = fadd float %366, %371
-  %373 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %343, 1
-  %374 = mul nuw nsw i64 %354, 32768
-  %375 = add nuw nsw i64 %374, %359
-  %376 = getelementptr inbounds nuw float, ptr %373, i64 %375
-  store float %372, ptr %376, align 4
-  %377 = add i64 %359, 1
-  br label %358
-
-378:                                              ; preds = %358
-  %379 = add i64 %354, 1
+  %357 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %358 = mul nuw nsw i64 %350, 32768
+  %359 = add nuw nsw i64 %358, %354
+  %360 = getelementptr inbounds nuw float, ptr %357, i64 %359
+  %361 = load float, ptr %360, align 4
+  %362 = call float @llvm.maxnum.f32(float %361, float 0.000000e+00)
+  %363 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %364 = mul nuw nsw i64 %350, 32768
+  %365 = add nuw nsw i64 %364, %354
+  %366 = getelementptr inbounds nuw float, ptr %363, i64 %365
+  store float %362, ptr %366, align 4
+  %367 = add i64 %354, 1
   br label %353
 
-380:                                              ; preds = %353
-  %381 = add i64 %349, 32
-  br label %348
+368:                                              ; preds = %353
+  %369 = add i64 %350, 1
+  br label %349
 
-382:                                              ; preds = %348
-  %383 = add i64 %345, 32
-  br label %344
+370:                                              ; preds = %349
+  %371 = call ptr @aligned_alloc(i64 64, i64 4294967296)
+  %372 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %371, 0
+  %373 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %372, ptr %371, 1
+  %374 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %373, i64 0, 2
+  %375 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %374, i64 32768, 3, 0
+  %376 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %375, i64 32768, 3, 1
+  %377 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %376, i64 32768, 4, 0
+  %378 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %377, i64 1, 4, 1
+  br label %379
 
-384:                                              ; preds = %344
-  %385 = call ptr @malloc(i64 16777280)
-  %386 = ptrtoint ptr %385 to i64
-  %387 = add i64 %386, 63
-  %388 = urem i64 %387, 64
-  %389 = sub i64 %387, %388
-  %390 = inttoptr i64 %389 to ptr
-  %391 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %385, 0
-  %392 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %391, ptr %390, 1
-  %393 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %392, i64 0, 2
-  %394 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %393, i64 128, 3, 0
-  %395 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %394, i64 32768, 3, 1
-  %396 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %395, i64 32768, 4, 0
-  %397 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %396, i64 1, 4, 1
-  br label %398
+379:                                              ; preds = %397, %370
+  %380 = phi i64 [ %398, %397 ], [ 0, %370 ]
+  %381 = icmp slt i64 %380, 32768
+  br i1 %381, label %382, label %399
 
-398:                                              ; preds = %431, %384
-  %399 = phi i64 [ %432, %431 ], [ 0, %384 ]
-  %400 = icmp slt i64 %399, 128
-  br i1 %400, label %401, label %433
+382:                                              ; preds = %379
+  br label %383
 
-401:                                              ; preds = %398
-  br label %402
+383:                                              ; preds = %386, %382
+  %384 = phi i64 [ %396, %386 ], [ 0, %382 ]
+  %385 = icmp slt i64 %384, 32768
+  br i1 %385, label %386, label %397
 
-402:                                              ; preds = %429, %401
-  %403 = phi i64 [ %430, %429 ], [ 0, %401 ]
-  %404 = icmp slt i64 %403, 32768
-  br i1 %404, label %405, label %431
+386:                                              ; preds = %383
+  %387 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %67, 1
+  %388 = mul nuw nsw i64 %384, 32768
+  %389 = add nuw nsw i64 %388, %380
+  %390 = getelementptr inbounds nuw float, ptr %387, i64 %389
+  %391 = load float, ptr %390, align 4
+  %392 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %378, 1
+  %393 = mul nuw nsw i64 %380, 32768
+  %394 = add nuw nsw i64 %393, %384
+  %395 = getelementptr inbounds nuw float, ptr %392, i64 %394
+  store float %391, ptr %395, align 4
+  %396 = add i64 %384, 1
+  br label %383
 
-405:                                              ; preds = %402
-  %406 = add i64 %399, 32
-  br label %407
+397:                                              ; preds = %383
+  %398 = add i64 %380, 1
+  br label %379
 
-407:                                              ; preds = %427, %405
-  %408 = phi i64 [ %428, %427 ], [ %399, %405 ]
-  %409 = icmp slt i64 %408, %406
-  br i1 %409, label %410, label %429
+399:                                              ; preds = %379
+  br label %400
 
-410:                                              ; preds = %407
-  %411 = add i64 %403, 32
-  br label %412
+400:                                              ; preds = %495, %399
+  %401 = phi i64 [ %496, %495 ], [ 0, %399 ]
+  %402 = icmp slt i64 %401, 128
+  br i1 %402, label %403, label %497
 
-412:                                              ; preds = %415, %410
-  %413 = phi i64 [ %426, %415 ], [ %403, %410 ]
-  %414 = icmp slt i64 %413, %411
-  br i1 %414, label %415, label %427
+403:                                              ; preds = %400
+  br label %404
 
-415:                                              ; preds = %412
-  %416 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %343, 1
-  %417 = mul nuw nsw i64 %408, 32768
-  %418 = add nuw nsw i64 %417, %413
-  %419 = getelementptr inbounds nuw float, ptr %416, i64 %418
-  %420 = load float, ptr %419, align 4
-  %421 = call float @llvm.maxnum.f32(float %420, float 0.000000e+00)
-  %422 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %397, 1
-  %423 = mul nuw nsw i64 %408, 32768
-  %424 = add nuw nsw i64 %423, %413
-  %425 = getelementptr inbounds nuw float, ptr %422, i64 %424
-  store float %421, ptr %425, align 4
-  %426 = add i64 %413, 1
-  br label %412
+404:                                              ; preds = %493, %403
+  %405 = phi i64 [ %494, %493 ], [ 0, %403 ]
+  %406 = icmp slt i64 %405, 32768
+  br i1 %406, label %407, label %495
 
-427:                                              ; preds = %412
-  %428 = add i64 %408, 1
-  br label %407
+407:                                              ; preds = %404
+  br label %408
 
-429:                                              ; preds = %407
-  %430 = add i64 %403, 32
-  br label %402
+408:                                              ; preds = %491, %407
+  %409 = phi i64 [ %492, %491 ], [ 0, %407 ]
+  %410 = icmp slt i64 %409, 32768
+  br i1 %410, label %411, label %493
 
-431:                                              ; preds = %402
-  %432 = add i64 %399, 32
-  br label %398
+411:                                              ; preds = %408
+  %412 = mul nsw i64 %401, 32768
+  %413 = add i64 %412, %409
+  %414 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 0
+  %415 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %416 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %414, 0
+  %417 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %416, ptr %415, 1
+  %418 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %417, i64 %413, 2
+  %419 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %418, i64 32, 3, 0
+  %420 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %419, i64 32768, 4, 0
+  %421 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %420, i64 32, 3, 1
+  %422 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %421, i64 1, 4, 1
+  %423 = mul nsw i64 %409, 32768
+  %424 = add i64 %423, %405
+  %425 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %378, 0
+  %426 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %378, 1
+  %427 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %425, 0
+  %428 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %427, ptr %426, 1
+  %429 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %428, i64 %424, 2
+  %430 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %429, i64 32, 3, 0
+  %431 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %430, i64 32768, 4, 0
+  %432 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %431, i64 32, 3, 1
+  %433 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %432, i64 1, 4, 1
+  %434 = mul nsw i64 %401, 32768
+  %435 = add i64 %434, %405
+  %436 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 0
+  %437 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 1
+  %438 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %436, 0
+  %439 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %438, ptr %437, 1
+  %440 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %439, i64 %435, 2
+  %441 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %440, i64 32, 3, 0
+  %442 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %441, i64 32768, 4, 0
+  %443 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %442, i64 32, 3, 1
+  %444 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %443, i64 1, 4, 1
+  br label %445
 
-433:                                              ; preds = %398
-  %434 = call ptr @malloc(i64 4294967360)
-  %435 = ptrtoint ptr %434 to i64
-  %436 = add i64 %435, 63
-  %437 = urem i64 %436, 64
-  %438 = sub i64 %436, %437
-  %439 = inttoptr i64 %438 to ptr
-  %440 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %434, 0
-  %441 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %440, ptr %439, 1
-  %442 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %441, i64 0, 2
-  %443 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %442, i64 32768, 3, 0
-  %444 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %443, i64 32768, 3, 1
-  %445 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %444, i64 32768, 4, 0
-  %446 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %445, i64 1, 4, 1
-  br label %447
+445:                                              ; preds = %489, %411
+  %446 = phi i64 [ %490, %489 ], [ 0, %411 ]
+  %447 = icmp slt i64 %446, 32
+  br i1 %447, label %448, label %491
 
-447:                                              ; preds = %479, %433
-  %448 = phi i64 [ %480, %479 ], [ 0, %433 ]
-  %449 = icmp slt i64 %448, 32768
-  br i1 %449, label %450, label %481
+448:                                              ; preds = %445
+  br label %449
 
-450:                                              ; preds = %447
-  br label %451
+449:                                              ; preds = %487, %448
+  %450 = phi i64 [ %488, %487 ], [ 0, %448 ]
+  %451 = icmp slt i64 %450, 32
+  br i1 %451, label %452, label %489
 
-451:                                              ; preds = %477, %450
-  %452 = phi i64 [ %478, %477 ], [ 0, %450 ]
-  %453 = icmp slt i64 %452, 32768
-  br i1 %453, label %454, label %479
+452:                                              ; preds = %449
+  br label %453
 
-454:                                              ; preds = %451
-  %455 = add i64 %448, 32
-  br label %456
+453:                                              ; preds = %456, %452
+  %454 = phi i64 [ %486, %456 ], [ 0, %452 ]
+  %455 = icmp slt i64 %454, 32
+  br i1 %455, label %456, label %487
 
-456:                                              ; preds = %475, %454
-  %457 = phi i64 [ %476, %475 ], [ %448, %454 ]
-  %458 = icmp slt i64 %457, %455
-  br i1 %458, label %459, label %477
+456:                                              ; preds = %453
+  %457 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %422, 1
+  %458 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %422, 2
+  %459 = getelementptr float, ptr %457, i64 %458
+  %460 = mul nuw nsw i64 %446, 32768
+  %461 = add nuw nsw i64 %460, %454
+  %462 = getelementptr inbounds nuw float, ptr %459, i64 %461
+  %463 = load float, ptr %462, align 4
+  %464 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %433, 1
+  %465 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %433, 2
+  %466 = getelementptr float, ptr %464, i64 %465
+  %467 = mul nuw nsw i64 %454, 32768
+  %468 = add nuw nsw i64 %467, %450
+  %469 = getelementptr inbounds nuw float, ptr %466, i64 %468
+  %470 = load float, ptr %469, align 4
+  %471 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %444, 1
+  %472 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %444, 2
+  %473 = getelementptr float, ptr %471, i64 %472
+  %474 = mul nuw nsw i64 %446, 32768
+  %475 = add nuw nsw i64 %474, %450
+  %476 = getelementptr inbounds nuw float, ptr %473, i64 %475
+  %477 = load float, ptr %476, align 4
+  %478 = fmul float %463, %470
+  %479 = fadd float %478, %477
+  %480 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %444, 1
+  %481 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %444, 2
+  %482 = getelementptr float, ptr %480, i64 %481
+  %483 = mul nuw nsw i64 %446, 32768
+  %484 = add nuw nsw i64 %483, %450
+  %485 = getelementptr inbounds nuw float, ptr %482, i64 %484
+  store float %479, ptr %485, align 4
+  %486 = add i64 %454, 1
+  br label %453
 
-459:                                              ; preds = %456
-  %460 = add i64 %452, 32
-  br label %461
+487:                                              ; preds = %453
+  %488 = add i64 %450, 1
+  br label %449
 
-461:                                              ; preds = %464, %459
-  %462 = phi i64 [ %474, %464 ], [ %452, %459 ]
-  %463 = icmp slt i64 %462, %460
-  br i1 %463, label %464, label %475
+489:                                              ; preds = %449
+  %490 = add i64 %446, 1
+  br label %445
 
-464:                                              ; preds = %461
-  %465 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %67, 1
-  %466 = mul nuw nsw i64 %462, 32768
-  %467 = add nuw nsw i64 %466, %457
-  %468 = getelementptr inbounds nuw float, ptr %465, i64 %467
-  %469 = load float, ptr %468, align 4
-  %470 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %446, 1
-  %471 = mul nuw nsw i64 %457, 32768
-  %472 = add nuw nsw i64 %471, %462
-  %473 = getelementptr inbounds nuw float, ptr %470, i64 %472
-  store float %469, ptr %473, align 4
-  %474 = add i64 %462, 1
-  br label %461
+491:                                              ; preds = %445
+  %492 = add i64 %409, 32
+  br label %408
 
-475:                                              ; preds = %461
-  %476 = add i64 %457, 1
-  br label %456
+493:                                              ; preds = %408
+  %494 = add i64 %405, 32
+  br label %404
 
-477:                                              ; preds = %456
-  %478 = add i64 %452, 32
-  br label %451
+495:                                              ; preds = %404
+  %496 = add i64 %401, 32
+  br label %400
 
-479:                                              ; preds = %451
-  %480 = add i64 %448, 32
-  br label %447
+497:                                              ; preds = %400
+  br label %498
 
-481:                                              ; preds = %447
-  %482 = call ptr @malloc(i64 16777280)
-  %483 = ptrtoint ptr %482 to i64
-  %484 = add i64 %483, 63
-  %485 = urem i64 %484, 64
-  %486 = sub i64 %484, %485
-  %487 = inttoptr i64 %486 to ptr
-  %488 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %482, 0
-  %489 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %488, ptr %487, 1
-  %490 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %489, i64 0, 2
-  %491 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %490, i64 128, 3, 0
-  %492 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %491, i64 32768, 3, 1
-  %493 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %492, i64 32768, 4, 0
-  %494 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %493, i64 1, 4, 1
-  br label %495
+498:                                              ; preds = %514, %497
+  %499 = phi i64 [ %515, %514 ], [ 0, %497 ]
+  %500 = icmp slt i64 %499, 1
+  br i1 %500, label %501, label %516
 
-495:                                              ; preds = %522, %481
-  %496 = phi i64 [ %523, %522 ], [ 0, %481 ]
-  %497 = icmp slt i64 %496, 128
-  br i1 %497, label %498, label %524
+501:                                              ; preds = %498
+  br label %502
 
-498:                                              ; preds = %495
-  br label %499
+502:                                              ; preds = %505, %501
+  %503 = phi i64 [ %513, %505 ], [ 0, %501 ]
+  %504 = icmp slt i64 %503, 32768
+  br i1 %504, label %505, label %514
 
-499:                                              ; preds = %520, %498
-  %500 = phi i64 [ %521, %520 ], [ 0, %498 ]
-  %501 = icmp slt i64 %500, 32768
-  br i1 %501, label %502, label %522
+505:                                              ; preds = %502
+  %506 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %60, 1
+  %507 = getelementptr inbounds nuw float, ptr %506, i64 %503
+  %508 = load float, ptr %507, align 4
+  %509 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %282, 1
+  %510 = mul nuw nsw i64 %499, 32768
+  %511 = add nuw nsw i64 %510, %503
+  %512 = getelementptr inbounds nuw float, ptr %509, i64 %511
+  store float %508, ptr %512, align 4
+  %513 = add i64 %503, 1
+  br label %502
 
-502:                                              ; preds = %499
-  %503 = add i64 %496, 32
-  br label %504
+514:                                              ; preds = %502
+  %515 = add i64 %499, 1
+  br label %498
 
-504:                                              ; preds = %518, %502
-  %505 = phi i64 [ %519, %518 ], [ %496, %502 ]
-  %506 = icmp slt i64 %505, %503
-  br i1 %506, label %507, label %520
+516:                                              ; preds = %498
+  br label %517
 
-507:                                              ; preds = %504
-  %508 = add i64 %500, 32
-  br label %509
+517:                                              ; preds = %534, %516
+  %518 = phi i64 [ %535, %534 ], [ 0, %516 ]
+  %519 = icmp slt i64 %518, 128
+  br i1 %519, label %520, label %536
 
-509:                                              ; preds = %512, %507
-  %510 = phi i64 [ %517, %512 ], [ %500, %507 ]
-  %511 = icmp slt i64 %510, %508
-  br i1 %511, label %512, label %518
+520:                                              ; preds = %517
+  br label %521
 
-512:                                              ; preds = %509
-  %513 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %494, 1
-  %514 = mul nuw nsw i64 %505, 32768
-  %515 = add nuw nsw i64 %514, %510
-  %516 = getelementptr inbounds nuw float, ptr %513, i64 %515
-  store float 0.000000e+00, ptr %516, align 4
-  %517 = add i64 %510, 1
-  br label %509
+521:                                              ; preds = %524, %520
+  %522 = phi i64 [ %533, %524 ], [ 0, %520 ]
+  %523 = icmp slt i64 %522, 32768
+  br i1 %523, label %524, label %534
 
-518:                                              ; preds = %509
-  %519 = add i64 %505, 1
-  br label %504
+524:                                              ; preds = %521
+  %525 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %282, 1
+  %526 = add nuw nsw i64 0, %522
+  %527 = getelementptr inbounds nuw float, ptr %525, i64 %526
+  %528 = load float, ptr %527, align 4
+  %529 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %530 = mul nuw nsw i64 %518, 32768
+  %531 = add nuw nsw i64 %530, %522
+  %532 = getelementptr inbounds nuw float, ptr %529, i64 %531
+  store float %528, ptr %532, align 4
+  %533 = add i64 %522, 1
+  br label %521
 
-520:                                              ; preds = %504
-  %521 = add i64 %500, 32
-  br label %499
+534:                                              ; preds = %521
+  %535 = add i64 %518, 1
+  br label %517
 
-522:                                              ; preds = %499
-  %523 = add i64 %496, 32
-  br label %495
+536:                                              ; preds = %517
+  br label %537
 
-524:                                              ; preds = %495
-  br label %525
+537:                                              ; preds = %561, %536
+  %538 = phi i64 [ %562, %561 ], [ 0, %536 ]
+  %539 = icmp slt i64 %538, 128
+  br i1 %539, label %540, label %563
 
-525:                                              ; preds = %582, %524
-  %526 = phi i64 [ %583, %582 ], [ 0, %524 ]
-  %527 = icmp slt i64 %526, 128
-  br i1 %527, label %528, label %584
+540:                                              ; preds = %537
+  br label %541
 
-528:                                              ; preds = %525
-  br label %529
+541:                                              ; preds = %544, %540
+  %542 = phi i64 [ %560, %544 ], [ 0, %540 ]
+  %543 = icmp slt i64 %542, 32768
+  br i1 %543, label %544, label %561
 
-529:                                              ; preds = %580, %528
-  %530 = phi i64 [ %581, %580 ], [ 0, %528 ]
-  %531 = icmp slt i64 %530, 32768
-  br i1 %531, label %532, label %582
+544:                                              ; preds = %541
+  %545 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 1
+  %546 = mul nuw nsw i64 %538, 32768
+  %547 = add nuw nsw i64 %546, %542
+  %548 = getelementptr inbounds nuw float, ptr %545, i64 %547
+  %549 = load float, ptr %548, align 4
+  %550 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %551 = mul nuw nsw i64 %538, 32768
+  %552 = add nuw nsw i64 %551, %542
+  %553 = getelementptr inbounds nuw float, ptr %550, i64 %552
+  %554 = load float, ptr %553, align 4
+  %555 = fadd float %549, %554
+  %556 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %557 = mul nuw nsw i64 %538, 32768
+  %558 = add nuw nsw i64 %557, %542
+  %559 = getelementptr inbounds nuw float, ptr %556, i64 %558
+  store float %555, ptr %559, align 4
+  %560 = add i64 %542, 1
+  br label %541
 
-532:                                              ; preds = %529
-  %533 = add i64 %526, 32
-  br label %534
+561:                                              ; preds = %541
+  %562 = add i64 %538, 1
+  br label %537
 
-534:                                              ; preds = %578, %532
-  %535 = phi i64 [ %579, %578 ], [ %526, %532 ]
-  %536 = icmp slt i64 %535, %533
-  br i1 %536, label %537, label %580
+563:                                              ; preds = %537
+  br label %564
 
-537:                                              ; preds = %534
-  %538 = add i64 %530, 32
-  br label %539
+564:                                              ; preds = %583, %563
+  %565 = phi i64 [ %584, %583 ], [ 0, %563 ]
+  %566 = icmp slt i64 %565, 128
+  br i1 %566, label %567, label %585
 
-539:                                              ; preds = %576, %537
-  %540 = phi i64 [ %577, %576 ], [ %530, %537 ]
-  %541 = icmp slt i64 %540, %538
-  br i1 %541, label %542, label %578
+567:                                              ; preds = %564
+  br label %568
 
-542:                                              ; preds = %539
-  br label %543
+568:                                              ; preds = %571, %567
+  %569 = phi i64 [ %582, %571 ], [ 0, %567 ]
+  %570 = icmp slt i64 %569, 32768
+  br i1 %570, label %571, label %583
 
-543:                                              ; preds = %574, %542
-  %544 = phi i64 [ %575, %574 ], [ 0, %542 ]
-  %545 = icmp slt i64 %544, 32768
-  br i1 %545, label %546, label %576
+571:                                              ; preds = %568
+  %572 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %573 = mul nuw nsw i64 %565, 32768
+  %574 = add nuw nsw i64 %573, %569
+  %575 = getelementptr inbounds nuw float, ptr %572, i64 %574
+  %576 = load float, ptr %575, align 4
+  %577 = call float @llvm.maxnum.f32(float %576, float 0.000000e+00)
+  %578 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %579 = mul nuw nsw i64 %565, 32768
+  %580 = add nuw nsw i64 %579, %569
+  %581 = getelementptr inbounds nuw float, ptr %578, i64 %580
+  store float %577, ptr %581, align 4
+  %582 = add i64 %569, 1
+  br label %568
 
-546:                                              ; preds = %543
-  %547 = add i64 %544, 32
-  br label %548
+583:                                              ; preds = %568
+  %584 = add i64 %565, 1
+  br label %564
 
-548:                                              ; preds = %551, %546
-  %549 = phi i64 [ %573, %551 ], [ %544, %546 ]
-  %550 = icmp slt i64 %549, %547
-  br i1 %550, label %551, label %574
+585:                                              ; preds = %564
+  %586 = call ptr @aligned_alloc(i64 64, i64 2147483648)
+  %587 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %586, 0
+  %588 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %587, ptr %586, 1
+  %589 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %588, i64 0, 2
+  %590 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %589, i64 32768, 3, 0
+  %591 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %590, i64 16384, 3, 1
+  %592 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %591, i64 16384, 4, 0
+  %593 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %592, i64 1, 4, 1
+  br label %594
 
-551:                                              ; preds = %548
-  %552 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %397, 1
-  %553 = mul nuw nsw i64 %535, 32768
-  %554 = add nuw nsw i64 %553, %549
-  %555 = getelementptr inbounds nuw float, ptr %552, i64 %554
-  %556 = load float, ptr %555, align 4
-  %557 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %446, 1
-  %558 = mul nuw nsw i64 %549, 32768
-  %559 = add nuw nsw i64 %558, %540
-  %560 = getelementptr inbounds nuw float, ptr %557, i64 %559
-  %561 = load float, ptr %560, align 4
-  %562 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %494, 1
-  %563 = mul nuw nsw i64 %535, 32768
-  %564 = add nuw nsw i64 %563, %540
-  %565 = getelementptr inbounds nuw float, ptr %562, i64 %564
-  %566 = load float, ptr %565, align 4
-  %567 = fmul float %556, %561
-  %568 = fadd float %567, %566
-  %569 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %494, 1
-  %570 = mul nuw nsw i64 %535, 32768
-  %571 = add nuw nsw i64 %570, %540
-  %572 = getelementptr inbounds nuw float, ptr %569, i64 %571
-  store float %568, ptr %572, align 4
-  %573 = add i64 %549, 1
-  br label %548
+594:                                              ; preds = %612, %585
+  %595 = phi i64 [ %613, %612 ], [ 0, %585 ]
+  %596 = icmp slt i64 %595, 32768
+  br i1 %596, label %597, label %614
 
-574:                                              ; preds = %548
-  %575 = add i64 %544, 32
-  br label %543
-
-576:                                              ; preds = %543
-  %577 = add i64 %540, 1
-  br label %539
-
-578:                                              ; preds = %539
-  %579 = add i64 %535, 1
-  br label %534
-
-580:                                              ; preds = %534
-  %581 = add i64 %530, 32
-  br label %529
-
-582:                                              ; preds = %529
-  %583 = add i64 %526, 32
-  br label %525
-
-584:                                              ; preds = %525
-  %585 = call ptr @malloc(i64 131136)
-  %586 = ptrtoint ptr %585 to i64
-  %587 = add i64 %586, 63
-  %588 = urem i64 %587, 64
-  %589 = sub i64 %587, %588
-  %590 = inttoptr i64 %589 to ptr
-  %591 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %585, 0
-  %592 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %591, ptr %590, 1
-  %593 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %592, i64 0, 2
-  %594 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %593, i64 1, 3, 0
-  %595 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %594, i64 32768, 3, 1
-  %596 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %595, i64 32768, 4, 0
-  %597 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %596, i64 1, 4, 1
+597:                                              ; preds = %594
   br label %598
 
-598:                                              ; preds = %628, %584
-  %599 = phi i64 [ %629, %628 ], [ 0, %584 ]
-  %600 = icmp slt i64 %599, 1
-  br i1 %600, label %601, label %630
+598:                                              ; preds = %601, %597
+  %599 = phi i64 [ %611, %601 ], [ 0, %597 ]
+  %600 = icmp slt i64 %599, 16384
+  br i1 %600, label %601, label %612
 
 601:                                              ; preds = %598
-  br label %602
-
-602:                                              ; preds = %626, %601
-  %603 = phi i64 [ %627, %626 ], [ 0, %601 ]
-  %604 = icmp slt i64 %603, 32768
-  br i1 %604, label %605, label %628
-
-605:                                              ; preds = %602
-  %606 = add i64 %599, 1
-  br label %607
-
-607:                                              ; preds = %624, %605
-  %608 = phi i64 [ %625, %624 ], [ %599, %605 ]
-  %609 = icmp slt i64 %608, %606
-  br i1 %609, label %610, label %626
-
-610:                                              ; preds = %607
-  %611 = add i64 %603, 32
-  br label %612
-
-612:                                              ; preds = %615, %610
-  %613 = phi i64 [ %623, %615 ], [ %603, %610 ]
-  %614 = icmp slt i64 %613, %611
-  br i1 %614, label %615, label %624
-
-615:                                              ; preds = %612
-  %616 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %60, 1
-  %617 = getelementptr inbounds nuw float, ptr %616, i64 %613
-  %618 = load float, ptr %617, align 4
-  %619 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %597, 1
-  %620 = mul nuw nsw i64 %608, 32768
-  %621 = add nuw nsw i64 %620, %613
-  %622 = getelementptr inbounds nuw float, ptr %619, i64 %621
-  store float %618, ptr %622, align 4
-  %623 = add i64 %613, 1
-  br label %612
-
-624:                                              ; preds = %612
-  %625 = add i64 %608, 1
-  br label %607
-
-626:                                              ; preds = %607
-  %627 = add i64 %603, 32
-  br label %602
-
-628:                                              ; preds = %602
-  %629 = add i64 %599, 32
+  %602 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %55, 1
+  %603 = mul nuw nsw i64 %599, 32768
+  %604 = add nuw nsw i64 %603, %595
+  %605 = getelementptr inbounds nuw float, ptr %602, i64 %604
+  %606 = load float, ptr %605, align 4
+  %607 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %593, 1
+  %608 = mul nuw nsw i64 %595, 16384
+  %609 = add nuw nsw i64 %608, %599
+  %610 = getelementptr inbounds nuw float, ptr %607, i64 %609
+  store float %606, ptr %610, align 4
+  %611 = add i64 %599, 1
   br label %598
 
-630:                                              ; preds = %598
-  %631 = call ptr @malloc(i64 16777280)
-  %632 = ptrtoint ptr %631 to i64
-  %633 = add i64 %632, 63
-  %634 = urem i64 %633, 64
-  %635 = sub i64 %633, %634
-  %636 = inttoptr i64 %635 to ptr
-  %637 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %631, 0
-  %638 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %637, ptr %636, 1
-  %639 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %638, i64 0, 2
-  %640 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %639, i64 128, 3, 0
-  %641 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %640, i64 32768, 3, 1
-  %642 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %641, i64 32768, 4, 0
-  %643 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %642, i64 1, 4, 1
-  br label %644
+612:                                              ; preds = %598
+  %613 = add i64 %595, 1
+  br label %594
 
-644:                                              ; preds = %675, %630
-  %645 = phi i64 [ %676, %675 ], [ 0, %630 ]
-  %646 = icmp slt i64 %645, 128
-  br i1 %646, label %647, label %677
+614:                                              ; preds = %594
+  %615 = call ptr @aligned_alloc(i64 64, i64 8388608)
+  %616 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %615, 0
+  %617 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %616, ptr %615, 1
+  %618 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %617, i64 0, 2
+  %619 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %618, i64 128, 3, 0
+  %620 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %619, i64 16384, 3, 1
+  %621 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %620, i64 16384, 4, 0
+  %622 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %621, i64 1, 4, 1
+  %623 = call ptr @aligned_alloc(i64 64, i64 8388608)
+  %624 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %623, 0
+  %625 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %624, ptr %623, 1
+  %626 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %625, i64 0, 2
+  %627 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %626, i64 128, 3, 0
+  %628 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %627, i64 16384, 3, 1
+  %629 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %628, i64 16384, 4, 0
+  %630 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %629, i64 1, 4, 1
+  br label %631
 
-647:                                              ; preds = %644
-  br label %648
+631:                                              ; preds = %644, %614
+  %632 = phi i64 [ %645, %644 ], [ 0, %614 ]
+  %633 = icmp slt i64 %632, 128
+  br i1 %633, label %634, label %646
 
-648:                                              ; preds = %673, %647
-  %649 = phi i64 [ %674, %673 ], [ 0, %647 ]
-  %650 = icmp slt i64 %649, 32768
-  br i1 %650, label %651, label %675
+634:                                              ; preds = %631
+  br label %635
 
-651:                                              ; preds = %648
-  %652 = add i64 %645, 32
-  br label %653
+635:                                              ; preds = %638, %634
+  %636 = phi i64 [ %643, %638 ], [ 0, %634 ]
+  %637 = icmp slt i64 %636, 16384
+  br i1 %637, label %638, label %644
 
-653:                                              ; preds = %671, %651
-  %654 = phi i64 [ %672, %671 ], [ %645, %651 ]
-  %655 = icmp slt i64 %654, %652
-  br i1 %655, label %656, label %673
+638:                                              ; preds = %635
+  %639 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %630, 1
+  %640 = mul nuw nsw i64 %632, 16384
+  %641 = add nuw nsw i64 %640, %636
+  %642 = getelementptr inbounds nuw float, ptr %639, i64 %641
+  store float 0.000000e+00, ptr %642, align 4
+  %643 = add i64 %636, 1
+  br label %635
 
-656:                                              ; preds = %653
-  %657 = add i64 %649, 32
-  br label %658
+644:                                              ; preds = %635
+  %645 = add i64 %632, 1
+  br label %631
 
-658:                                              ; preds = %661, %656
-  %659 = phi i64 [ %670, %661 ], [ %649, %656 ]
-  %660 = icmp slt i64 %659, %657
-  br i1 %660, label %661, label %671
+646:                                              ; preds = %631
+  br label %647
 
-661:                                              ; preds = %658
-  %662 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %597, 1
-  %663 = add nuw nsw i64 0, %659
-  %664 = getelementptr inbounds nuw float, ptr %662, i64 %663
-  %665 = load float, ptr %664, align 4
-  %666 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %643, 1
-  %667 = mul nuw nsw i64 %654, 32768
-  %668 = add nuw nsw i64 %667, %659
-  %669 = getelementptr inbounds nuw float, ptr %666, i64 %668
-  store float %665, ptr %669, align 4
-  %670 = add i64 %659, 1
-  br label %658
+647:                                              ; preds = %742, %646
+  %648 = phi i64 [ %743, %742 ], [ 0, %646 ]
+  %649 = icmp slt i64 %648, 128
+  br i1 %649, label %650, label %744
 
-671:                                              ; preds = %658
-  %672 = add i64 %654, 1
-  br label %653
+650:                                              ; preds = %647
+  br label %651
 
-673:                                              ; preds = %653
-  %674 = add i64 %649, 32
-  br label %648
+651:                                              ; preds = %740, %650
+  %652 = phi i64 [ %741, %740 ], [ 0, %650 ]
+  %653 = icmp slt i64 %652, 16384
+  br i1 %653, label %654, label %742
 
-675:                                              ; preds = %648
-  %676 = add i64 %645, 32
-  br label %644
+654:                                              ; preds = %651
+  br label %655
 
-677:                                              ; preds = %644
-  %678 = call ptr @malloc(i64 16777280)
-  %679 = ptrtoint ptr %678 to i64
-  %680 = add i64 %679, 63
-  %681 = urem i64 %680, 64
-  %682 = sub i64 %680, %681
-  %683 = inttoptr i64 %682 to ptr
-  %684 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %678, 0
-  %685 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %684, ptr %683, 1
-  %686 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %685, i64 0, 2
-  %687 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %686, i64 128, 3, 0
-  %688 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %687, i64 32768, 3, 1
-  %689 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %688, i64 32768, 4, 0
-  %690 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %689, i64 1, 4, 1
-  br label %691
+655:                                              ; preds = %738, %654
+  %656 = phi i64 [ %739, %738 ], [ 0, %654 ]
+  %657 = icmp slt i64 %656, 32768
+  br i1 %657, label %658, label %740
 
-691:                                              ; preds = %729, %677
-  %692 = phi i64 [ %730, %729 ], [ 0, %677 ]
-  %693 = icmp slt i64 %692, 128
-  br i1 %693, label %694, label %731
+658:                                              ; preds = %655
+  %659 = mul nsw i64 %648, 32768
+  %660 = add i64 %659, %656
+  %661 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 0
+  %662 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 1
+  %663 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %661, 0
+  %664 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %663, ptr %662, 1
+  %665 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %664, i64 %660, 2
+  %666 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %665, i64 32, 3, 0
+  %667 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %666, i64 32768, 4, 0
+  %668 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %667, i64 32, 3, 1
+  %669 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %668, i64 1, 4, 1
+  %670 = mul nsw i64 %656, 16384
+  %671 = add i64 %670, %652
+  %672 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %593, 0
+  %673 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %593, 1
+  %674 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %672, 0
+  %675 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %674, ptr %673, 1
+  %676 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %675, i64 %671, 2
+  %677 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %676, i64 32, 3, 0
+  %678 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %677, i64 16384, 4, 0
+  %679 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %678, i64 32, 3, 1
+  %680 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %679, i64 1, 4, 1
+  %681 = mul nsw i64 %648, 16384
+  %682 = add i64 %681, %652
+  %683 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %630, 0
+  %684 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %630, 1
+  %685 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %683, 0
+  %686 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %685, ptr %684, 1
+  %687 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %686, i64 %682, 2
+  %688 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %687, i64 32, 3, 0
+  %689 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %688, i64 16384, 4, 0
+  %690 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %689, i64 32, 3, 1
+  %691 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %690, i64 1, 4, 1
+  br label %692
 
-694:                                              ; preds = %691
-  br label %695
+692:                                              ; preds = %736, %658
+  %693 = phi i64 [ %737, %736 ], [ 0, %658 ]
+  %694 = icmp slt i64 %693, 32
+  br i1 %694, label %695, label %738
 
-695:                                              ; preds = %727, %694
-  %696 = phi i64 [ %728, %727 ], [ 0, %694 ]
-  %697 = icmp slt i64 %696, 32768
-  br i1 %697, label %698, label %729
+695:                                              ; preds = %692
+  br label %696
 
-698:                                              ; preds = %695
-  %699 = add i64 %692, 32
+696:                                              ; preds = %734, %695
+  %697 = phi i64 [ %735, %734 ], [ 0, %695 ]
+  %698 = icmp slt i64 %697, 32
+  br i1 %698, label %699, label %736
+
+699:                                              ; preds = %696
   br label %700
 
-700:                                              ; preds = %725, %698
-  %701 = phi i64 [ %726, %725 ], [ %692, %698 ]
-  %702 = icmp slt i64 %701, %699
-  br i1 %702, label %703, label %727
+700:                                              ; preds = %703, %699
+  %701 = phi i64 [ %733, %703 ], [ 0, %699 ]
+  %702 = icmp slt i64 %701, 32
+  br i1 %702, label %703, label %734
 
 703:                                              ; preds = %700
-  %704 = add i64 %696, 32
-  br label %705
-
-705:                                              ; preds = %708, %703
-  %706 = phi i64 [ %724, %708 ], [ %696, %703 ]
-  %707 = icmp slt i64 %706, %704
-  br i1 %707, label %708, label %725
-
-708:                                              ; preds = %705
-  %709 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %494, 1
-  %710 = mul nuw nsw i64 %701, 32768
-  %711 = add nuw nsw i64 %710, %706
-  %712 = getelementptr inbounds nuw float, ptr %709, i64 %711
-  %713 = load float, ptr %712, align 4
-  %714 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %643, 1
-  %715 = mul nuw nsw i64 %701, 32768
-  %716 = add nuw nsw i64 %715, %706
-  %717 = getelementptr inbounds nuw float, ptr %714, i64 %716
-  %718 = load float, ptr %717, align 4
-  %719 = fadd float %713, %718
-  %720 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %690, 1
-  %721 = mul nuw nsw i64 %701, 32768
-  %722 = add nuw nsw i64 %721, %706
+  %704 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %669, 1
+  %705 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %669, 2
+  %706 = getelementptr float, ptr %704, i64 %705
+  %707 = mul nuw nsw i64 %693, 32768
+  %708 = add nuw nsw i64 %707, %701
+  %709 = getelementptr inbounds nuw float, ptr %706, i64 %708
+  %710 = load float, ptr %709, align 4
+  %711 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %680, 1
+  %712 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %680, 2
+  %713 = getelementptr float, ptr %711, i64 %712
+  %714 = mul nuw nsw i64 %701, 16384
+  %715 = add nuw nsw i64 %714, %697
+  %716 = getelementptr inbounds nuw float, ptr %713, i64 %715
+  %717 = load float, ptr %716, align 4
+  %718 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %691, 1
+  %719 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %691, 2
+  %720 = getelementptr float, ptr %718, i64 %719
+  %721 = mul nuw nsw i64 %693, 16384
+  %722 = add nuw nsw i64 %721, %697
   %723 = getelementptr inbounds nuw float, ptr %720, i64 %722
-  store float %719, ptr %723, align 4
-  %724 = add i64 %706, 1
-  br label %705
-
-725:                                              ; preds = %705
-  %726 = add i64 %701, 1
+  %724 = load float, ptr %723, align 4
+  %725 = fmul float %710, %717
+  %726 = fadd float %725, %724
+  %727 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %691, 1
+  %728 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %691, 2
+  %729 = getelementptr float, ptr %727, i64 %728
+  %730 = mul nuw nsw i64 %693, 16384
+  %731 = add nuw nsw i64 %730, %697
+  %732 = getelementptr inbounds nuw float, ptr %729, i64 %731
+  store float %726, ptr %732, align 4
+  %733 = add i64 %701, 1
   br label %700
 
-727:                                              ; preds = %700
-  %728 = add i64 %696, 32
-  br label %695
-
-729:                                              ; preds = %695
-  %730 = add i64 %692, 32
-  br label %691
-
-731:                                              ; preds = %691
-  %732 = call ptr @malloc(i64 16777280)
-  %733 = ptrtoint ptr %732 to i64
-  %734 = add i64 %733, 63
-  %735 = urem i64 %734, 64
-  %736 = sub i64 %734, %735
-  %737 = inttoptr i64 %736 to ptr
-  %738 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %732, 0
-  %739 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %738, ptr %737, 1
-  %740 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %739, i64 0, 2
-  %741 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %740, i64 128, 3, 0
-  %742 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %741, i64 32768, 3, 1
-  %743 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %742, i64 32768, 4, 0
-  %744 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %743, i64 1, 4, 1
-  br label %745
-
-745:                                              ; preds = %778, %731
-  %746 = phi i64 [ %779, %778 ], [ 0, %731 ]
-  %747 = icmp slt i64 %746, 128
-  br i1 %747, label %748, label %780
-
-748:                                              ; preds = %745
-  br label %749
-
-749:                                              ; preds = %776, %748
-  %750 = phi i64 [ %777, %776 ], [ 0, %748 ]
-  %751 = icmp slt i64 %750, 32768
-  br i1 %751, label %752, label %778
-
-752:                                              ; preds = %749
-  %753 = add i64 %746, 32
-  br label %754
-
-754:                                              ; preds = %774, %752
-  %755 = phi i64 [ %775, %774 ], [ %746, %752 ]
-  %756 = icmp slt i64 %755, %753
-  br i1 %756, label %757, label %776
-
-757:                                              ; preds = %754
-  %758 = add i64 %750, 32
-  br label %759
-
-759:                                              ; preds = %762, %757
-  %760 = phi i64 [ %773, %762 ], [ %750, %757 ]
-  %761 = icmp slt i64 %760, %758
-  br i1 %761, label %762, label %774
-
-762:                                              ; preds = %759
-  %763 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %690, 1
-  %764 = mul nuw nsw i64 %755, 32768
-  %765 = add nuw nsw i64 %764, %760
-  %766 = getelementptr inbounds nuw float, ptr %763, i64 %765
-  %767 = load float, ptr %766, align 4
-  %768 = call float @llvm.maxnum.f32(float %767, float 0.000000e+00)
-  %769 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %744, 1
-  %770 = mul nuw nsw i64 %755, 32768
-  %771 = add nuw nsw i64 %770, %760
-  %772 = getelementptr inbounds nuw float, ptr %769, i64 %771
-  store float %768, ptr %772, align 4
-  %773 = add i64 %760, 1
-  br label %759
-
-774:                                              ; preds = %759
-  %775 = add i64 %755, 1
-  br label %754
-
-776:                                              ; preds = %754
-  %777 = add i64 %750, 32
-  br label %749
-
-778:                                              ; preds = %749
-  %779 = add i64 %746, 32
-  br label %745
-
-780:                                              ; preds = %745
-  %781 = call ptr @malloc(i64 2147483712)
-  %782 = ptrtoint ptr %781 to i64
-  %783 = add i64 %782, 63
-  %784 = urem i64 %783, 64
-  %785 = sub i64 %783, %784
-  %786 = inttoptr i64 %785 to ptr
-  %787 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %781, 0
-  %788 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %787, ptr %786, 1
-  %789 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %788, i64 0, 2
-  %790 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %789, i64 32768, 3, 0
-  %791 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %790, i64 16384, 3, 1
-  %792 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %791, i64 16384, 4, 0
-  %793 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %792, i64 1, 4, 1
-  br label %794
-
-794:                                              ; preds = %826, %780
-  %795 = phi i64 [ %827, %826 ], [ 0, %780 ]
-  %796 = icmp slt i64 %795, 32768
-  br i1 %796, label %797, label %828
-
-797:                                              ; preds = %794
-  br label %798
-
-798:                                              ; preds = %824, %797
-  %799 = phi i64 [ %825, %824 ], [ 0, %797 ]
-  %800 = icmp slt i64 %799, 16384
-  br i1 %800, label %801, label %826
-
-801:                                              ; preds = %798
-  %802 = add i64 %795, 32
-  br label %803
-
-803:                                              ; preds = %822, %801
-  %804 = phi i64 [ %823, %822 ], [ %795, %801 ]
-  %805 = icmp slt i64 %804, %802
-  br i1 %805, label %806, label %824
-
-806:                                              ; preds = %803
-  %807 = add i64 %799, 32
-  br label %808
-
-808:                                              ; preds = %811, %806
-  %809 = phi i64 [ %821, %811 ], [ %799, %806 ]
-  %810 = icmp slt i64 %809, %807
-  br i1 %810, label %811, label %822
-
-811:                                              ; preds = %808
-  %812 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %55, 1
-  %813 = mul nuw nsw i64 %809, 32768
-  %814 = add nuw nsw i64 %813, %804
-  %815 = getelementptr inbounds nuw float, ptr %812, i64 %814
-  %816 = load float, ptr %815, align 4
-  %817 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %793, 1
-  %818 = mul nuw nsw i64 %804, 16384
-  %819 = add nuw nsw i64 %818, %809
-  %820 = getelementptr inbounds nuw float, ptr %817, i64 %819
-  store float %816, ptr %820, align 4
-  %821 = add i64 %809, 1
-  br label %808
-
-822:                                              ; preds = %808
-  %823 = add i64 %804, 1
-  br label %803
-
-824:                                              ; preds = %803
-  %825 = add i64 %799, 32
-  br label %798
-
-826:                                              ; preds = %798
-  %827 = add i64 %795, 32
-  br label %794
-
-828:                                              ; preds = %794
-  %829 = call ptr @malloc(i64 8388672)
-  %830 = ptrtoint ptr %829 to i64
-  %831 = add i64 %830, 63
-  %832 = urem i64 %831, 64
-  %833 = sub i64 %831, %832
-  %834 = inttoptr i64 %833 to ptr
-  %835 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %829, 0
-  %836 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %835, ptr %834, 1
-  %837 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %836, i64 0, 2
-  %838 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %837, i64 128, 3, 0
-  %839 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %838, i64 16384, 3, 1
-  %840 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %839, i64 16384, 4, 0
-  %841 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %840, i64 1, 4, 1
-  br label %842
-
-842:                                              ; preds = %869, %828
-  %843 = phi i64 [ %870, %869 ], [ 0, %828 ]
-  %844 = icmp slt i64 %843, 128
-  br i1 %844, label %845, label %871
-
-845:                                              ; preds = %842
-  br label %846
-
-846:                                              ; preds = %867, %845
-  %847 = phi i64 [ %868, %867 ], [ 0, %845 ]
-  %848 = icmp slt i64 %847, 16384
-  br i1 %848, label %849, label %869
-
-849:                                              ; preds = %846
-  %850 = add i64 %843, 32
-  br label %851
-
-851:                                              ; preds = %865, %849
-  %852 = phi i64 [ %866, %865 ], [ %843, %849 ]
-  %853 = icmp slt i64 %852, %850
-  br i1 %853, label %854, label %867
-
-854:                                              ; preds = %851
-  %855 = add i64 %847, 32
-  br label %856
-
-856:                                              ; preds = %859, %854
-  %857 = phi i64 [ %864, %859 ], [ %847, %854 ]
-  %858 = icmp slt i64 %857, %855
-  br i1 %858, label %859, label %865
-
-859:                                              ; preds = %856
-  %860 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %841, 1
-  %861 = mul nuw nsw i64 %852, 16384
-  %862 = add nuw nsw i64 %861, %857
-  %863 = getelementptr inbounds nuw float, ptr %860, i64 %862
-  store float 0.000000e+00, ptr %863, align 4
-  %864 = add i64 %857, 1
-  br label %856
-
-865:                                              ; preds = %856
-  %866 = add i64 %852, 1
-  br label %851
-
-867:                                              ; preds = %851
-  %868 = add i64 %847, 32
-  br label %846
-
-869:                                              ; preds = %846
-  %870 = add i64 %843, 32
-  br label %842
-
-871:                                              ; preds = %842
-  br label %872
-
-872:                                              ; preds = %929, %871
-  %873 = phi i64 [ %930, %929 ], [ 0, %871 ]
-  %874 = icmp slt i64 %873, 128
-  br i1 %874, label %875, label %931
-
-875:                                              ; preds = %872
-  br label %876
-
-876:                                              ; preds = %927, %875
-  %877 = phi i64 [ %928, %927 ], [ 0, %875 ]
-  %878 = icmp slt i64 %877, 16384
-  br i1 %878, label %879, label %929
-
-879:                                              ; preds = %876
-  %880 = add i64 %873, 32
-  br label %881
-
-881:                                              ; preds = %925, %879
-  %882 = phi i64 [ %926, %925 ], [ %873, %879 ]
-  %883 = icmp slt i64 %882, %880
-  br i1 %883, label %884, label %927
-
-884:                                              ; preds = %881
-  %885 = add i64 %877, 32
-  br label %886
-
-886:                                              ; preds = %923, %884
-  %887 = phi i64 [ %924, %923 ], [ %877, %884 ]
-  %888 = icmp slt i64 %887, %885
-  br i1 %888, label %889, label %925
-
-889:                                              ; preds = %886
-  br label %890
-
-890:                                              ; preds = %921, %889
-  %891 = phi i64 [ %922, %921 ], [ 0, %889 ]
-  %892 = icmp slt i64 %891, 32768
-  br i1 %892, label %893, label %923
-
-893:                                              ; preds = %890
-  %894 = add i64 %891, 32
-  br label %895
-
-895:                                              ; preds = %898, %893
-  %896 = phi i64 [ %920, %898 ], [ %891, %893 ]
-  %897 = icmp slt i64 %896, %894
-  br i1 %897, label %898, label %921
-
-898:                                              ; preds = %895
-  %899 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %744, 1
-  %900 = mul nuw nsw i64 %882, 32768
-  %901 = add nuw nsw i64 %900, %896
-  %902 = getelementptr inbounds nuw float, ptr %899, i64 %901
-  %903 = load float, ptr %902, align 4
-  %904 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %793, 1
-  %905 = mul nuw nsw i64 %896, 16384
-  %906 = add nuw nsw i64 %905, %887
-  %907 = getelementptr inbounds nuw float, ptr %904, i64 %906
-  %908 = load float, ptr %907, align 4
-  %909 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %841, 1
-  %910 = mul nuw nsw i64 %882, 16384
-  %911 = add nuw nsw i64 %910, %887
-  %912 = getelementptr inbounds nuw float, ptr %909, i64 %911
-  %913 = load float, ptr %912, align 4
-  %914 = fmul float %903, %908
-  %915 = fadd float %914, %913
-  %916 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %841, 1
-  %917 = mul nuw nsw i64 %882, 16384
-  %918 = add nuw nsw i64 %917, %887
-  %919 = getelementptr inbounds nuw float, ptr %916, i64 %918
-  store float %915, ptr %919, align 4
-  %920 = add i64 %896, 1
-  br label %895
-
-921:                                              ; preds = %895
-  %922 = add i64 %891, 32
-  br label %890
-
-923:                                              ; preds = %890
-  %924 = add i64 %887, 1
-  br label %886
-
-925:                                              ; preds = %886
-  %926 = add i64 %882, 1
-  br label %881
-
-927:                                              ; preds = %881
-  %928 = add i64 %877, 32
-  br label %876
-
-929:                                              ; preds = %876
-  %930 = add i64 %873, 32
-  br label %872
-
-931:                                              ; preds = %872
-  %932 = call ptr @malloc(i64 65600)
-  %933 = ptrtoint ptr %932 to i64
-  %934 = add i64 %933, 63
-  %935 = urem i64 %934, 64
-  %936 = sub i64 %934, %935
-  %937 = inttoptr i64 %936 to ptr
-  %938 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %932, 0
-  %939 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %938, ptr %937, 1
-  %940 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %939, i64 0, 2
-  %941 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %940, i64 1, 3, 0
-  %942 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %941, i64 16384, 3, 1
-  %943 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %942, i64 16384, 4, 0
-  %944 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %943, i64 1, 4, 1
-  br label %945
-
-945:                                              ; preds = %975, %931
-  %946 = phi i64 [ %976, %975 ], [ 0, %931 ]
-  %947 = icmp slt i64 %946, 1
-  br i1 %947, label %948, label %977
-
-948:                                              ; preds = %945
-  br label %949
-
-949:                                              ; preds = %973, %948
-  %950 = phi i64 [ %974, %973 ], [ 0, %948 ]
-  %951 = icmp slt i64 %950, 16384
-  br i1 %951, label %952, label %975
-
-952:                                              ; preds = %949
-  %953 = add i64 %946, 1
-  br label %954
-
-954:                                              ; preds = %971, %952
-  %955 = phi i64 [ %972, %971 ], [ %946, %952 ]
-  %956 = icmp slt i64 %955, %953
-  br i1 %956, label %957, label %973
-
-957:                                              ; preds = %954
-  %958 = add i64 %950, 32
-  br label %959
-
-959:                                              ; preds = %962, %957
-  %960 = phi i64 [ %970, %962 ], [ %950, %957 ]
-  %961 = icmp slt i64 %960, %958
-  br i1 %961, label %962, label %971
-
-962:                                              ; preds = %959
-  %963 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %48, 1
-  %964 = getelementptr inbounds nuw float, ptr %963, i64 %960
-  %965 = load float, ptr %964, align 4
-  %966 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %944, 1
-  %967 = mul nuw nsw i64 %955, 16384
-  %968 = add nuw nsw i64 %967, %960
-  %969 = getelementptr inbounds nuw float, ptr %966, i64 %968
-  store float %965, ptr %969, align 4
-  %970 = add i64 %960, 1
-  br label %959
-
-971:                                              ; preds = %959
-  %972 = add i64 %955, 1
-  br label %954
-
-973:                                              ; preds = %954
-  %974 = add i64 %950, 32
-  br label %949
-
-975:                                              ; preds = %949
-  %976 = add i64 %946, 32
-  br label %945
-
-977:                                              ; preds = %945
-  %978 = call ptr @malloc(i64 8388672)
-  %979 = ptrtoint ptr %978 to i64
-  %980 = add i64 %979, 63
-  %981 = urem i64 %980, 64
-  %982 = sub i64 %980, %981
-  %983 = inttoptr i64 %982 to ptr
-  %984 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %978, 0
-  %985 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %984, ptr %983, 1
-  %986 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %985, i64 0, 2
-  %987 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %986, i64 128, 3, 0
-  %988 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %987, i64 16384, 3, 1
-  %989 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %988, i64 16384, 4, 0
-  %990 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %989, i64 1, 4, 1
-  br label %991
-
-991:                                              ; preds = %1022, %977
-  %992 = phi i64 [ %1023, %1022 ], [ 0, %977 ]
-  %993 = icmp slt i64 %992, 128
-  br i1 %993, label %994, label %1024
-
-994:                                              ; preds = %991
-  br label %995
-
-995:                                              ; preds = %1020, %994
-  %996 = phi i64 [ %1021, %1020 ], [ 0, %994 ]
-  %997 = icmp slt i64 %996, 16384
-  br i1 %997, label %998, label %1022
-
-998:                                              ; preds = %995
-  %999 = add i64 %992, 32
-  br label %1000
-
-1000:                                             ; preds = %1018, %998
-  %1001 = phi i64 [ %1019, %1018 ], [ %992, %998 ]
-  %1002 = icmp slt i64 %1001, %999
-  br i1 %1002, label %1003, label %1020
-
-1003:                                             ; preds = %1000
-  %1004 = add i64 %996, 32
-  br label %1005
-
-1005:                                             ; preds = %1008, %1003
-  %1006 = phi i64 [ %1017, %1008 ], [ %996, %1003 ]
-  %1007 = icmp slt i64 %1006, %1004
-  br i1 %1007, label %1008, label %1018
-
-1008:                                             ; preds = %1005
-  %1009 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %944, 1
-  %1010 = add nuw nsw i64 0, %1006
-  %1011 = getelementptr inbounds nuw float, ptr %1009, i64 %1010
-  %1012 = load float, ptr %1011, align 4
-  %1013 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %990, 1
-  %1014 = mul nuw nsw i64 %1001, 16384
-  %1015 = add nuw nsw i64 %1014, %1006
-  %1016 = getelementptr inbounds nuw float, ptr %1013, i64 %1015
-  store float %1012, ptr %1016, align 4
-  %1017 = add i64 %1006, 1
-  br label %1005
-
-1018:                                             ; preds = %1005
-  %1019 = add i64 %1001, 1
-  br label %1000
-
-1020:                                             ; preds = %1000
-  %1021 = add i64 %996, 32
-  br label %995
-
-1022:                                             ; preds = %995
-  %1023 = add i64 %992, 32
-  br label %991
-
-1024:                                             ; preds = %991
-  %1025 = call ptr @malloc(i64 8388672)
-  %1026 = ptrtoint ptr %1025 to i64
-  %1027 = add i64 %1026, 63
-  %1028 = urem i64 %1027, 64
-  %1029 = sub i64 %1027, %1028
-  %1030 = inttoptr i64 %1029 to ptr
-  %1031 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %1025, 0
-  %1032 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1031, ptr %1030, 1
-  %1033 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1032, i64 0, 2
-  %1034 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1033, i64 128, 3, 0
-  %1035 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1034, i64 16384, 3, 1
-  %1036 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1035, i64 16384, 4, 0
-  %1037 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1036, i64 1, 4, 1
-  br label %1038
-
-1038:                                             ; preds = %1076, %1024
-  %1039 = phi i64 [ %1077, %1076 ], [ 0, %1024 ]
-  %1040 = icmp slt i64 %1039, 128
-  br i1 %1040, label %1041, label %1078
-
-1041:                                             ; preds = %1038
-  br label %1042
-
-1042:                                             ; preds = %1074, %1041
-  %1043 = phi i64 [ %1075, %1074 ], [ 0, %1041 ]
-  %1044 = icmp slt i64 %1043, 16384
-  br i1 %1044, label %1045, label %1076
-
-1045:                                             ; preds = %1042
-  %1046 = add i64 %1039, 32
-  br label %1047
-
-1047:                                             ; preds = %1072, %1045
-  %1048 = phi i64 [ %1073, %1072 ], [ %1039, %1045 ]
-  %1049 = icmp slt i64 %1048, %1046
-  br i1 %1049, label %1050, label %1074
-
-1050:                                             ; preds = %1047
-  %1051 = add i64 %1043, 32
-  br label %1052
-
-1052:                                             ; preds = %1055, %1050
-  %1053 = phi i64 [ %1071, %1055 ], [ %1043, %1050 ]
-  %1054 = icmp slt i64 %1053, %1051
-  br i1 %1054, label %1055, label %1072
-
-1055:                                             ; preds = %1052
-  %1056 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %841, 1
-  %1057 = mul nuw nsw i64 %1048, 16384
-  %1058 = add nuw nsw i64 %1057, %1053
-  %1059 = getelementptr inbounds nuw float, ptr %1056, i64 %1058
-  %1060 = load float, ptr %1059, align 4
-  %1061 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %990, 1
-  %1062 = mul nuw nsw i64 %1048, 16384
-  %1063 = add nuw nsw i64 %1062, %1053
-  %1064 = getelementptr inbounds nuw float, ptr %1061, i64 %1063
-  %1065 = load float, ptr %1064, align 4
-  %1066 = fadd float %1060, %1065
-  %1067 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %1037, 1
-  %1068 = mul nuw nsw i64 %1048, 16384
-  %1069 = add nuw nsw i64 %1068, %1053
-  %1070 = getelementptr inbounds nuw float, ptr %1067, i64 %1069
-  store float %1066, ptr %1070, align 4
-  %1071 = add i64 %1053, 1
-  br label %1052
-
-1072:                                             ; preds = %1052
-  %1073 = add i64 %1048, 1
-  br label %1047
-
-1074:                                             ; preds = %1047
-  %1075 = add i64 %1043, 32
-  br label %1042
-
-1076:                                             ; preds = %1042
-  %1077 = add i64 %1039, 32
-  br label %1038
-
-1078:                                             ; preds = %1038
-  %1079 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %99, 0
-  call void @free(ptr %1079)
-  %1080 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %147, 0
-  call void @free(ptr %1080)
-  %1081 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %250, 0
-  call void @free(ptr %1081)
-  %1082 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %296, 0
-  call void @free(ptr %1082)
-  %1083 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %343, 0
-  call void @free(ptr %1083)
-  %1084 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %397, 0
-  call void @free(ptr %1084)
-  %1085 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %446, 0
-  call void @free(ptr %1085)
-  %1086 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %494, 0
-  call void @free(ptr %1086)
-  %1087 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %597, 0
-  call void @free(ptr %1087)
-  %1088 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %643, 0
-  call void @free(ptr %1088)
-  %1089 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %690, 0
-  call void @free(ptr %1089)
-  %1090 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %744, 0
-  call void @free(ptr %1090)
-  %1091 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %793, 0
-  call void @free(ptr %1091)
-  %1092 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %841, 0
-  call void @free(ptr %1092)
-  %1093 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %944, 0
-  call void @free(ptr %1093)
-  %1094 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %990, 0
-  call void @free(ptr %1094)
-  ret { ptr, ptr, i64, [2 x i64], [2 x i64] } %1037
+734:                                              ; preds = %700
+  %735 = add i64 %697, 1
+  br label %696
+
+736:                                              ; preds = %696
+  %737 = add i64 %693, 1
+  br label %692
+
+738:                                              ; preds = %692
+  %739 = add i64 %656, 32
+  br label %655
+
+740:                                              ; preds = %655
+  %741 = add i64 %652, 32
+  br label %651
+
+742:                                              ; preds = %651
+  %743 = add i64 %648, 32
+  br label %647
+
+744:                                              ; preds = %647
+  %745 = call ptr @aligned_alloc(i64 64, i64 65536)
+  %746 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } poison, ptr %745, 0
+  %747 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %746, ptr %745, 1
+  %748 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %747, i64 0, 2
+  %749 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %748, i64 1, 3, 0
+  %750 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %749, i64 16384, 3, 1
+  %751 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %750, i64 16384, 4, 0
+  %752 = insertvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %751, i64 1, 4, 1
+  br label %753
+
+753:                                              ; preds = %769, %744
+  %754 = phi i64 [ %770, %769 ], [ 0, %744 ]
+  %755 = icmp slt i64 %754, 1
+  br i1 %755, label %756, label %771
+
+756:                                              ; preds = %753
+  br label %757
+
+757:                                              ; preds = %760, %756
+  %758 = phi i64 [ %768, %760 ], [ 0, %756 ]
+  %759 = icmp slt i64 %758, 16384
+  br i1 %759, label %760, label %769
+
+760:                                              ; preds = %757
+  %761 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %48, 1
+  %762 = getelementptr inbounds nuw float, ptr %761, i64 %758
+  %763 = load float, ptr %762, align 4
+  %764 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %752, 1
+  %765 = mul nuw nsw i64 %754, 16384
+  %766 = add nuw nsw i64 %765, %758
+  %767 = getelementptr inbounds nuw float, ptr %764, i64 %766
+  store float %763, ptr %767, align 4
+  %768 = add i64 %758, 1
+  br label %757
+
+769:                                              ; preds = %757
+  %770 = add i64 %754, 1
+  br label %753
+
+771:                                              ; preds = %753
+  br label %772
+
+772:                                              ; preds = %789, %771
+  %773 = phi i64 [ %790, %789 ], [ 0, %771 ]
+  %774 = icmp slt i64 %773, 128
+  br i1 %774, label %775, label %791
+
+775:                                              ; preds = %772
+  br label %776
+
+776:                                              ; preds = %779, %775
+  %777 = phi i64 [ %788, %779 ], [ 0, %775 ]
+  %778 = icmp slt i64 %777, 16384
+  br i1 %778, label %779, label %789
+
+779:                                              ; preds = %776
+  %780 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %752, 1
+  %781 = add nuw nsw i64 0, %777
+  %782 = getelementptr inbounds nuw float, ptr %780, i64 %781
+  %783 = load float, ptr %782, align 4
+  %784 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %622, 1
+  %785 = mul nuw nsw i64 %773, 16384
+  %786 = add nuw nsw i64 %785, %777
+  %787 = getelementptr inbounds nuw float, ptr %784, i64 %786
+  store float %783, ptr %787, align 4
+  %788 = add i64 %777, 1
+  br label %776
+
+789:                                              ; preds = %776
+  %790 = add i64 %773, 1
+  br label %772
+
+791:                                              ; preds = %772
+  br label %792
+
+792:                                              ; preds = %816, %791
+  %793 = phi i64 [ %817, %816 ], [ 0, %791 ]
+  %794 = icmp slt i64 %793, 128
+  br i1 %794, label %795, label %818
+
+795:                                              ; preds = %792
+  br label %796
+
+796:                                              ; preds = %799, %795
+  %797 = phi i64 [ %815, %799 ], [ 0, %795 ]
+  %798 = icmp slt i64 %797, 16384
+  br i1 %798, label %799, label %816
+
+799:                                              ; preds = %796
+  %800 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %630, 1
+  %801 = mul nuw nsw i64 %793, 16384
+  %802 = add nuw nsw i64 %801, %797
+  %803 = getelementptr inbounds nuw float, ptr %800, i64 %802
+  %804 = load float, ptr %803, align 4
+  %805 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %622, 1
+  %806 = mul nuw nsw i64 %793, 16384
+  %807 = add nuw nsw i64 %806, %797
+  %808 = getelementptr inbounds nuw float, ptr %805, i64 %807
+  %809 = load float, ptr %808, align 4
+  %810 = fadd float %804, %809
+  %811 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %622, 1
+  %812 = mul nuw nsw i64 %793, 16384
+  %813 = add nuw nsw i64 %812, %797
+  %814 = getelementptr inbounds nuw float, ptr %811, i64 %813
+  store float %810, ptr %814, align 4
+  %815 = add i64 %797, 1
+  br label %796
+
+816:                                              ; preds = %796
+  %817 = add i64 %793, 1
+  br label %792
+
+818:                                              ; preds = %792
+  %819 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %94, 0
+  call void @free(ptr %819)
+  %820 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %123, 0
+  call void @free(ptr %820)
+  %821 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %131, 0
+  call void @free(ptr %821)
+  %822 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %155, 0
+  call void @free(ptr %822)
+  %823 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %282, 0
+  call void @free(ptr %823)
+  %824 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %378, 0
+  call void @free(ptr %824)
+  %825 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %593, 0
+  call void @free(ptr %825)
+  %826 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %630, 0
+  call void @free(ptr %826)
+  %827 = extractvalue { ptr, ptr, i64, [2 x i64], [2 x i64] } %752, 0
+  call void @free(ptr %827)
+  ret { ptr, ptr, i64, [2 x i64], [2 x i64] } %622
 }
 
-; Function Attrs: nocallback nocreateundeforpoison nofree nosync nounwind speculatable willreturn memory(none)
-declare float @llvm.maxnum.f32(float, float) #0
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
 
-attributes #0 = { nocallback nocreateundeforpoison nofree nosync nounwind speculatable willreturn memory(none) }
+; Function Attrs: nocallback nocreateundeforpoison nofree nosync nounwind speculatable willreturn memory(none)
+declare float @llvm.maxnum.f32(float, float) #1
+
+attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+attributes #1 = { nocallback nocreateundeforpoison nofree nosync nounwind speculatable willreturn memory(none) }
 
 !llvm.module.flags = !{!0}
 

@@ -427,6 +427,48 @@ def parse_signature(text, filename_hint=None):
 # ---------------------------------------------------------------------------
 
 
+def drop_weight_bias_pairs(params, candidates):
+    """Remove candidates that are provably a Linear/Conv WEIGHT, not the input.
+
+    A multi-dimensional parameter immediately followed by a 1-D parameter whose
+    length equals the multi-dim one's leading dimension is a (weight, bias)
+    pair. The model input is never followed by its own bias, so any parameter
+    in that shape can be ruled out.
+
+    This exists because the size-based tie-break below cannot separate the
+    input from a weight when they happen to have the SAME shape, and the two
+    frontends order their arguments differently:
+
+        torch-mlir:  (x, w1, b1, w2, b2, ...)      -- input first
+        mim:         (w1, b1, x, w2, b2, ...)      -- input THIRD
+
+    03_DeepNarrowMLP is configured with batch_size == hidden width == 1024 and
+    input_size 8192, so `network.0.weight` is [1024, 8192] -- byte-for-byte the
+    same shape as the input [1024, 8192]. Both tie on element count, `max()`
+    returns the first, and on mim's ordering that is the WEIGHT at arg0 rather
+    than the input at arg2. The generated driver then passed input.bin as
+    network.0.weight and read weights.bin one slot out of phase from the very
+    first layer, which is why mim_llvm and mim_mlir_llvm both produced garbage
+    (max_diff/scale 2.83, top1 390/1024) while mlir_llvm passed at 1.8e-05.
+
+    Ruling out weight/bias pairs leaves exactly the input on both orderings.
+    Applied only when it leaves something behind, so it can never empty the
+    candidate set.
+    """
+    kept = []
+    for i in candidates:
+        nxt = params[i + 1] if i + 1 < len(params) else None
+        is_weight_of_pair = (
+            len(params[i].dims) > 1
+            and nxt is not None
+            and len(nxt.dims) == 1
+            and nxt.dims[0] == params[i].dims[0]
+        )
+        if not is_weight_of_pair:
+            kept.append(i)
+    return kept or candidates
+
+
 def assign_roles(params, return_dims):
     """Mutates params in place: sets .role and .cname."""
     batch = return_dims[0] if return_dims else None
@@ -446,6 +488,8 @@ def assign_roles(params, return_dims):
         candidates = [i for i in range(len(params)) if None not in params[i].dims]
     if not candidates:
         candidates = list(range(len(params)))
+
+    candidates = drop_weight_bias_pairs(params, candidates)
 
     input_idx = max(
         candidates,

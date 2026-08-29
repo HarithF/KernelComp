@@ -1,10 +1,11 @@
 module {
-  func.func public @GoogleNetInceptionModule(%l_self_modules_branch1x1_parameters_weight_: tensor<192x480xf32>, %l_self_modules_branch1x1_parameters_bias_: tensor<192xf32>, %l_x_: tensor<10x480x224x224xf32>, %l_self_modules_branch3x3_modules_0_parameters_weight_: tensor<96x480xf32>, %l_self_modules_branch3x3_modules_0_parameters_bias_: tensor<96xf32>, %l_self_modules_branch3x3_modules_1_parameters_weight_: tensor<208x96x3x3xf32>, %l_self_modules_branch3x3_modules_1_parameters_bias_: tensor<208xf32>, %l_self_modules_branch5x5_modules_0_parameters_weight_: tensor<16x480xf32>, %l_self_modules_branch5x5_modules_0_parameters_bias_: tensor<16xf32>, %l_self_modules_branch5x5_modules_1_parameters_weight_: tensor<48x16x5x5xf32>, %l_self_modules_branch5x5_modules_1_parameters_bias_: tensor<48xf32>, %l_self_modules_branch_pool_modules_1_parameters_weight_: tensor<64x480xf32>, %l_self_modules_branch_pool_modules_1_parameters_bias_: tensor<64xf32>) -> tensor<10x512x224x224xf32> {
+  func.func public @GoogleInceptionModule(%l_self_modules_branch1x1_parameters_weight_: tensor<192x480xf32>, %l_self_modules_branch1x1_parameters_bias_: tensor<192xf32>, %l_x_: tensor<10x480x224x224xf32>, %l_self_modules_branch3x3_modules_0_parameters_weight_: tensor<96x480xf32>, %l_self_modules_branch3x3_modules_0_parameters_bias_: tensor<96xf32>, %l_self_modules_branch3x3_modules_1_parameters_weight_: tensor<208x96x3x3xf32>, %l_self_modules_branch3x3_modules_1_parameters_bias_: tensor<208xf32>, %l_self_modules_branch5x5_modules_0_parameters_weight_: tensor<16x480xf32>, %l_self_modules_branch5x5_modules_0_parameters_bias_: tensor<16xf32>, %l_self_modules_branch5x5_modules_1_parameters_weight_: tensor<48x16x5x5xf32>, %l_self_modules_branch5x5_modules_1_parameters_bias_: tensor<48xf32>, %l_self_modules_branch_pool_modules_1_parameters_weight_: tensor<64x480xf32>, %l_self_modules_branch_pool_modules_1_parameters_bias_: tensor<64xf32>) -> tensor<10x512x224x224xf32> {
+    %l_self_modules_branch1x1_parameters_weight_.expanded = tensor.expand_shape %l_self_modules_branch1x1_parameters_weight_ [[0], [1, 2, 3]] output_shape [192, 480, 1, 1] : tensor<192x480xf32> into tensor<192x480x1x1xf32>
     %v0.empty = tensor.empty() : tensor<10x192x224x224xf32>
     %v1 = arith.constant 0.0 : f32
     %v0.buf = linalg.fill ins(%v1 : f32) outs(%v0.empty : tensor<10x192x224x224xf32>) -> tensor<10x192x224x224xf32>
     %v0.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d4, d2 + d5, d3 + d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d1, d4, d5, d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d1, d2, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction", "reduction", "reduction"]}
-      ins(%l_x_, %l_self_modules_branch1x1_parameters_weight_ : tensor<10x480x224x224xf32>, tensor<192x480xf32>)
+      ins(%l_x_, %l_self_modules_branch1x1_parameters_weight_.expanded : tensor<10x480x224x224xf32>, tensor<192x480x1x1xf32>)
       outs(%v0.buf : tensor<10x192x224x224xf32>) {
         ^bb0(%in_2: f32, %in_3: f32, %acc_4: f32):
           %v5 = arith.mulf %in_2, %in_3 : f32
@@ -34,10 +35,11 @@ module {
           linalg.yield %v14 : f32
       }
     -> tensor<10x192x224x224xf32>
+    %l_self_modules_branch3x3_modules_0_parameters_weight_.expanded = tensor.expand_shape %l_self_modules_branch3x3_modules_0_parameters_weight_ [[0], [1, 2, 3]] output_shape [96, 480, 1, 1] : tensor<96x480xf32> into tensor<96x480x1x1xf32>
     %v15.empty = tensor.empty() : tensor<10x96x224x224xf32>
     %v15.buf = linalg.fill ins(%v1 : f32) outs(%v15.empty : tensor<10x96x224x224xf32>) -> tensor<10x96x224x224xf32>
     %v15.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d4, d2 + d5, d3 + d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d1, d4, d5, d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d1, d2, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction", "reduction", "reduction"]}
-      ins(%l_x_, %l_self_modules_branch3x3_modules_0_parameters_weight_ : tensor<10x480x224x224xf32>, tensor<96x480xf32>)
+      ins(%l_x_, %l_self_modules_branch3x3_modules_0_parameters_weight_.expanded : tensor<10x480x224x224xf32>, tensor<96x480x1x1xf32>)
       outs(%v15.buf : tensor<10x96x224x224xf32>) {
         ^bb0(%in_16: f32, %in_17: f32, %acc_18: f32):
           %v19 = arith.mulf %in_16, %in_17 : f32
@@ -104,10 +106,11 @@ module {
           linalg.yield %v46 : f32
       }
     -> tensor<10x208x224x224xf32>
+    %l_self_modules_branch5x5_modules_0_parameters_weight_.expanded = tensor.expand_shape %l_self_modules_branch5x5_modules_0_parameters_weight_ [[0], [1, 2, 3]] output_shape [16, 480, 1, 1] : tensor<16x480xf32> into tensor<16x480x1x1xf32>
     %v47.empty = tensor.empty() : tensor<10x16x224x224xf32>
     %v47.buf = linalg.fill ins(%v1 : f32) outs(%v47.empty : tensor<10x16x224x224xf32>) -> tensor<10x16x224x224xf32>
     %v47.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d4, d2 + d5, d3 + d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d1, d4, d5, d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d1, d2, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction", "reduction", "reduction"]}
-      ins(%l_x_, %l_self_modules_branch5x5_modules_0_parameters_weight_ : tensor<10x480x224x224xf32>, tensor<16x480xf32>)
+      ins(%l_x_, %l_self_modules_branch5x5_modules_0_parameters_weight_.expanded : tensor<10x480x224x224xf32>, tensor<16x480x1x1xf32>)
       outs(%v47.buf : tensor<10x16x224x224xf32>) {
         ^bb0(%in_48: f32, %in_49: f32, %acc_50: f32):
           %v51 = arith.mulf %in_48, %in_49 : f32
@@ -190,10 +193,11 @@ module {
           linalg.yield %v86 : f32
       }
     -> tensor<10x480x224x224xf32>
+    %l_self_modules_branch_pool_modules_1_parameters_weight_.expanded = tensor.expand_shape %l_self_modules_branch_pool_modules_1_parameters_weight_ [[0], [1, 2, 3]] output_shape [64, 480, 1, 1] : tensor<64x480xf32> into tensor<64x480x1x1xf32>
     %v87.empty = tensor.empty() : tensor<10x64x224x224xf32>
     %v87.buf = linalg.fill ins(%v1 : f32) outs(%v87.empty : tensor<10x64x224x224xf32>) -> tensor<10x64x224x224xf32>
     %v87.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d4, d2 + d5, d3 + d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d1, d4, d5, d6)>, affine_map<(d0, d1, d2, d3, d4, d5, d6) -> (d0, d1, d2, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction", "reduction", "reduction"]}
-      ins(%input_5.buf.out, %l_self_modules_branch_pool_modules_1_parameters_weight_ : tensor<10x480x224x224xf32>, tensor<64x480xf32>)
+      ins(%input_5.buf.out, %l_self_modules_branch_pool_modules_1_parameters_weight_.expanded : tensor<10x480x224x224xf32>, tensor<64x480x1x1xf32>)
       outs(%v87.buf : tensor<10x64x224x224xf32>) {
         ^bb0(%in_88: f32, %in_89: f32, %acc_90: f32):
           %v91 = arith.mulf %in_88, %in_89 : f32
