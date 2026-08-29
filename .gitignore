@@ -6,5 +6,6 @@
 *lowered*
 **/build/
 **/bin/
+**/output/
 **/__pycache__/
 
