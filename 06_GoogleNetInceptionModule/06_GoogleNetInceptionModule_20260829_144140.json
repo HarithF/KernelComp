@@ -1,0 +1,121 @@
+{
+  "model_dir": "06_GoogleNetInceptionModule",
+  "model_name": "GoogleNetInceptionModule",
+  "run_id": "20260829_144140",
+  "generated_at": "2026-08-29T21:05:00",
+  "reference_source": "torch:torch_ref/6_GoogleNetInceptionModule.py",
+  "reps": 10,
+  "atol": 0.01,
+  "rtol": 0.001,
+  "output_shape": [
+    10,
+    512,
+    224,
+    224
+  ],
+  "timing_summary": {
+    "mim_llvm": {
+      "reps": 10,
+      "median_ns": 169476321247.0,
+      "mean_ns": 169523910817.0,
+      "min_ns": 166893580143.0,
+      "max_ns": 171834593505.0,
+      "median_ms": 169476.321,
+      "rel_median": 6.586
+    },
+    "mim_mlir_llvm": {
+      "reps": 10,
+      "median_ns": 25784430770.0,
+      "mean_ns": 25856477948.6,
+      "min_ns": 25228942473.0,
+      "max_ns": 27074222666.0,
+      "median_ms": 25784.431,
+      "rel_median": 1.002
+    },
+    "mlir_llvm": {
+      "reps": 10,
+      "median_ns": 25733746012.0,
+      "mean_ns": 25736224428.6,
+      "min_ns": 25161990692.0,
+      "max_ns": 26925668012.0,
+      "median_ms": 25733.746,
+      "rel_median": 1.0
+    }
+  },
+  "fastest_pipeline": "mlir_llvm",
+  "pipelines": {
+    "mim_llvm": {
+      "ref_mean_abs": 251.29014587402344,
+      "max_abs_diff": 0.005615234375,
+      "mean_abs_diff": 0.00013276426761876792,
+      "max_rel_diff": 5602836.5,
+      "max_diff_over_scale": 2.2345620891428553e-05,
+      "rms_diff_over_scale": 1.0175000397794065e-06,
+      "frac_pointwise_rel_gt_1e3": 0.00018767142782405931,
+      "allclose": true,
+      "status": "PASS",
+      "timing": {
+        "model": "GoogleNetInceptionModule",
+        "pipeline": "mim_llvm",
+        "run_id": "20260829_144140",
+        "weights_path": "./06_GoogleNetInceptionModule/GoogleNetInceptionModule_weights.bin",
+        "input_path": "./06_GoogleNetInceptionModule/GoogleNetInceptionModule_input.bin",
+        "output_path": "./06_GoogleNetInceptionModule/outputs/output_mim_llvm.bin",
+        "reps": 10,
+        "median_ns": 169476321247.0,
+        "mean_ns": 169523910817.0,
+        "min_ns": 166893580143.0,
+        "max_ns": 171834593505.0
+      }
+    },
+    "mim_mlir_llvm": {
+      "ref_mean_abs": 251.29014587402344,
+      "max_abs_diff": 0.005615234375,
+      "mean_abs_diff": 0.00016357582353521138,
+      "max_rel_diff": 2622604.5,
+      "max_diff_over_scale": 2.2345620891428553e-05,
+      "rms_diff_over_scale": 1.1797137631219812e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0002513184839365434,
+      "allclose": true,
+      "status": "PASS",
+      "timing": {
+        "model": "GoogleInceptionModule",
+        "pipeline": "mim_mlir_llvm",
+        "run_id": "20260829_144140",
+        "weights_path": "./06_GoogleNetInceptionModule/GoogleNetInceptionModule_weights.bin",
+        "input_path": "./06_GoogleNetInceptionModule/GoogleNetInceptionModule_input.bin",
+        "output_path": "./06_GoogleNetInceptionModule/outputs/output_mim_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 25784430770.0,
+        "mean_ns": 25856477948.6,
+        "min_ns": 25228942473.0,
+        "max_ns": 27074222666.0
+      }
+    },
+    "mlir_llvm": {
+      "ref_mean_abs": 251.29014587402344,
+      "max_abs_diff": 0.005126953125,
+      "mean_abs_diff": 0.00016272113134618849,
+      "max_rel_diff": 327825.5625,
+      "max_diff_over_scale": 2.0402523659868166e-05,
+      "rms_diff_over_scale": 1.1738677585526602e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0002486520883988361,
+      "allclose": true,
+      "status": "PASS",
+      "timing": {
+        "model": "GoogleNetInceptionModule",
+        "pipeline": "mlir_llvm",
+        "run_id": "20260829_144140",
+        "weights_path": "./06_GoogleNetInceptionModule/GoogleNetInceptionModule_weights.bin",
+        "input_path": "./06_GoogleNetInceptionModule/GoogleNetInceptionModule_input.bin",
+        "output_path": "./06_GoogleNetInceptionModule/outputs/output_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 25733746012.0,
+        "mean_ns": 25736224428.6,
+        "min_ns": 25161990692.0,
+        "max_ns": 26925668012.0
+      }
+    }
+  },
+  "all_pass": true
+}

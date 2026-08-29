@@ -1,0 +1,122 @@
+{
+  "model_dir": "04_LeNet5",
+  "model_name": "LeNet5",
+  "run_id": "20260829_144140",
+  "generated_at": "2026-08-29T18:18:44",
+  "reference_source": "torch:torch_ref/4_LeNet5.py",
+  "reps": 10,
+  "atol": 0.01,
+  "rtol": 0.001,
+  "output_shape": [
+    4096,
+    20
+  ],
+  "timing_summary": {
+    "mim_llvm": {
+      "reps": 10,
+      "median_ns": 377052742.0,
+      "mean_ns": 437018120.6,
+      "min_ns": 345187050.0,
+      "max_ns": 697548661.0,
+      "median_ms": 377.053,
+      "rel_median": 1.707
+    },
+    "mim_mlir_llvm": {
+      "reps": 10,
+      "median_ns": 349718453.0,
+      "mean_ns": 276614232.0,
+      "min_ns": 186590506.0,
+      "max_ns": 362695550.0,
+      "median_ms": 349.718,
+      "rel_median": 1.584
+    },
+    "mlir_llvm": {
+      "reps": 10,
+      "median_ns": 220830591.0,
+      "mean_ns": 226151417.4,
+      "min_ns": 170422710.0,
+      "max_ns": 347224628.0,
+      "median_ms": 220.831,
+      "rel_median": 1.0
+    }
+  },
+  "fastest_pipeline": "mlir_llvm",
+  "pipelines": {
+    "mim_llvm": {
+      "ref_mean_abs": 92465.7421875,
+      "max_abs_diff": 0.1875,
+      "mean_abs_diff": 0.028864795342087746,
+      "max_rel_diff": 0.014078675769269466,
+      "max_diff_over_scale": 2.0277780095057096e-06,
+      "rms_diff_over_scale": 3.980045164553303e-07,
+      "frac_pointwise_rel_gt_1e3": 0.0001953125,
+      "allclose": true,
+      "top1_match": "4096/4096",
+      "status": "PASS",
+      "timing": {
+        "model": "LeNet5",
+        "pipeline": "mim_llvm",
+        "run_id": "20260829_144140",
+        "weights_path": "./04_LeNet5/LeNet5_weights.bin",
+        "input_path": "./04_LeNet5/LeNet5_input.bin",
+        "output_path": "./04_LeNet5/outputs/output_mim_llvm.bin",
+        "reps": 10,
+        "median_ns": 377052742.0,
+        "mean_ns": 437018120.6,
+        "min_ns": 345187050.0,
+        "max_ns": 697548661.0
+      }
+    },
+    "mim_mlir_llvm": {
+      "ref_mean_abs": 92465.7421875,
+      "max_abs_diff": 0.21875,
+      "mean_abs_diff": 0.03151433542370796,
+      "max_rel_diff": 0.014585565775632858,
+      "max_diff_over_scale": 2.3657410110899946e-06,
+      "rms_diff_over_scale": 4.3472871880112507e-07,
+      "frac_pointwise_rel_gt_1e3": 0.0001708984375,
+      "allclose": true,
+      "top1_match": "4096/4096",
+      "status": "PASS",
+      "timing": {
+        "model": "LeNet5",
+        "pipeline": "mim_mlir_llvm",
+        "run_id": "20260829_144140",
+        "weights_path": "./04_LeNet5/LeNet5_weights.bin",
+        "input_path": "./04_LeNet5/LeNet5_input.bin",
+        "output_path": "./04_LeNet5/outputs/output_mim_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 349718453.0,
+        "mean_ns": 276614232.0,
+        "min_ns": 186590506.0,
+        "max_ns": 362695550.0
+      }
+    },
+    "mlir_llvm": {
+      "ref_mean_abs": 92465.7421875,
+      "max_abs_diff": 0.21875,
+      "mean_abs_diff": 0.031542856246232986,
+      "max_rel_diff": 0.024228915572166443,
+      "max_diff_over_scale": 2.3657410110899946e-06,
+      "rms_diff_over_scale": 4.3426038587313087e-07,
+      "frac_pointwise_rel_gt_1e3": 0.00015869140625,
+      "allclose": true,
+      "top1_match": "4096/4096",
+      "status": "PASS",
+      "timing": {
+        "model": "LeNet5",
+        "pipeline": "mlir_llvm",
+        "run_id": "20260829_144140",
+        "weights_path": "./04_LeNet5/LeNet5_weights.bin",
+        "input_path": "./04_LeNet5/LeNet5_input.bin",
+        "output_path": "./04_LeNet5/outputs/output_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 220830591.0,
+        "mean_ns": 226151417.4,
+        "min_ns": 170422710.0,
+        "max_ns": 347224628.0
+      }
+    }
+  },
+  "all_pass": true
+}
