@@ -7,7 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 
-/* Auto-generated driver for `GoogleInceptionModule` matching MLIR's expanded memref
+/* Auto-generated driver for `GoogleNetInceptionModule` matching MLIR's expanded memref
  * descriptor calling convention (convert-func-to-llvm output). Generated
  * by gen_drivers.py -- do not hand-edit.
  *
@@ -29,7 +29,7 @@
  * b6: shape [64] (bias)
  * output: shape [10, 512, 224, 224]
  *
- * Usage: GoogleInceptionModule_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
+ * Usage: GoogleNetInceptionModule_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
  * run_id/json_report default to a generated UTC timestamp / a filename
  * derived from it if omitted -- pass the same run_id across every model
  * and pipeline in one batch (e.g. from reporter.py) to correlate their
@@ -55,7 +55,7 @@ typedef struct {
   int64_t strides[4];
 } memref4d;
 
-extern memref4d GoogleInceptionModule(
+extern memref4d GoogleNetInceptionModule(
     float *w1_a,
     float *w1_al,
     int64_t w1_off,
@@ -334,7 +334,7 @@ int main(int argc, char **argv) {
   if (argc > 6) {
     json_report_path = argv[6];
   } else {
-    snprintf(json_path_buf, sizeof(json_path_buf), "GoogleInceptionModule_mim_mlir_llvm_%s_timing.json", run_id);
+    snprintf(json_path_buf, sizeof(json_path_buf), "GoogleNetInceptionModule_mim_mlir_llvm_%s_timing.json", run_id);
     json_report_path = json_path_buf;
   }
 
@@ -387,7 +387,7 @@ int main(int argc, char **argv) {
     pid_t p = fork();
     if (p < 0) { perror("fork"); return 1; }
     if (p == 0) {
-      memref4d out = GoogleInceptionModule(
+      memref4d out = GoogleNetInceptionModule(
           w1, w1, 0,
         192, 480,
         480, 1,
@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
     }
     await_child(p, "warm-up");
   } else {
-    memref4d out = GoogleInceptionModule(
+    memref4d out = GoogleNetInceptionModule(
         w1, w1, 0,
         192, 480,
         480, 1,
@@ -489,7 +489,7 @@ int main(int argc, char **argv) {
       if (p == 0) {
         struct timespec t0, t1;
         clock_gettime(CLOCK_MONOTONIC, &t0);
-        memref4d cur = GoogleInceptionModule(
+        memref4d cur = GoogleNetInceptionModule(
             w1, w1, 0,
         192, 480,
         480, 1,
@@ -544,7 +544,7 @@ int main(int argc, char **argv) {
     } else {
       struct timespec t0, t1;
       clock_gettime(CLOCK_MONOTONIC, &t0);
-      memref4d cur = GoogleInceptionModule(
+      memref4d cur = GoogleNetInceptionModule(
           w1, w1, 0,
         192, 480,
         480, 1,
@@ -611,7 +611,7 @@ int main(int argc, char **argv) {
          weights_path, input_path, reps, times[reps / 2], sum / reps, times[0],
          times[reps - 1]);
 
-  write_timing_report(json_report_path, "GoogleInceptionModule", "mim_mlir_llvm", run_id,
+  write_timing_report(json_report_path, "GoogleNetInceptionModule", "mim_mlir_llvm", run_id,
                        weights_path, input_path, output_path, reps,
                        times[reps / 2], sum / reps, times[0], times[reps - 1]);
 

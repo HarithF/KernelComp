@@ -4,13 +4,13 @@ declare i8* @malloc(i64)
 
 
 define  [128 x [16384 x float]]* @ShallowWideMLP([32768 x [16384 x float]]* %_96563, [32768 x float]* %fv_1_96454, [128 x [16384 x float]]* %_96552, [32768 x [32768 x float]]* %_96464, [32768 x float]* %fv_0_96335, [16384 x [32768 x float]]* %_96345, [16384 x float]* %fv_4_96203) {
-mimir_graph_ed38cea96c2affe0_96035:
+mimir_graph_f50ac88239ea1ebe_96035:
     %_96050i8 = call i8* @malloc(i64 16777216)
     %_96050 = bitcast i8* %_96050i8 to [128 x [32768 x float]]*
     br label %head_96055
 
 head_96055:
-    %_96058 = phi i64 [ 0, %mimir_graph_ed38cea96c2affe0_96035 ], [ %fv_7_96522, %new_exit_96519 ]
+    %_96058 = phi i64 [ 0, %mimir_graph_f50ac88239ea1ebe_96035 ], [ %fv_7_96522, %new_exit_96519 ]
     %_96063 = icmp ult i64 %_96058, 128
     %fv_0_96536 = trunc i64 %_96058 to i7
     %fv_1_96554.zext = zext i7 %fv_0_96536 to i8 ; add one more bit for gep index as it is treated as signed value
@@ -37,20 +37,20 @@ new_body_96525:
     br label %head_96528
 
 head_96528:
-    %_96531 = phi i64 [ 0, %new_body_96525 ], [ %fv_9_96583, %new_body_96549 ]
+    %_96531 = phi i64 [ 0, %new_body_96525 ], [ %fv_17_96583, %new_body_96549 ]
     %fv_12_96542 = phi float [ 0x0000000000000000, %new_body_96525 ], [ %_96589, %new_body_96549 ]
     %_96533 = icmp ult i64 %_96531, 16384
     br i1 %_96533, label %new_body_96549, label %new_exit_96534
 
 new_body_96549:
     %_96555 = trunc i64 %_96531 to i14
-    %fv_13_96557.zext = zext i14 %_96555 to i15 ; add one more bit for gep index as it is treated as signed value
-    %fv_13_96557 = getelementptr inbounds [16384 x float], [16384 x float]* %fv_1_96554, i64 0, i15 %fv_13_96557.zext
-    %_96559 = load float, float* %fv_13_96557
-    %fv_4_96578.zext = zext i14 %_96555 to i15 ; add one more bit for gep index as it is treated as signed value
-    %fv_4_96578 = getelementptr inbounds [16384 x float], [16384 x float]* %fv_11_96576, i64 0, i15 %fv_4_96578.zext
-    %_96580 = load float, float* %fv_4_96578
-    %fv_9_96583 = add nuw nsw i64 1, %_96531
+    %fv_1_96557.zext = zext i14 %_96555 to i15 ; add one more bit for gep index as it is treated as signed value
+    %fv_1_96557 = getelementptr inbounds [16384 x float], [16384 x float]* %fv_1_96554, i64 0, i15 %fv_1_96557.zext
+    %_96559 = load float, float* %fv_1_96557
+    %fv_12_96578.zext = zext i14 %_96555 to i15 ; add one more bit for gep index as it is treated as signed value
+    %fv_12_96578 = getelementptr inbounds [16384 x float], [16384 x float]* %fv_11_96576, i64 0, i15 %fv_12_96578.zext
+    %_96580 = load float, float* %fv_12_96578
+    %fv_17_96583 = add nuw nsw i64 1, %_96531
     %_96587 = fmul fast float %_96559, %_96580
     %_96589 = fadd fast float %_96587, %fv_12_96542
     br label %head_96528
@@ -96,26 +96,26 @@ new_body_96410:
     br label %head_96413
 
 head_96413:
-    %fv_10_96416 = phi i64 [ 0, %new_body_96410 ], [ %fv_0_96484, %new_body_96434 ]
+    %fv_4_96416 = phi i64 [ 0, %new_body_96410 ], [ %fv_12_96484, %new_body_96434 ]
     %fv_1_96427 = phi float [ 0x0000000000000000, %new_body_96410 ], [ %_96495, %new_body_96434 ]
-    %_96418 = icmp ult i64 %fv_10_96416, 32768
+    %_96418 = icmp ult i64 %fv_4_96416, 32768
     br i1 %_96418, label %new_body_96434, label %new_exit_96419
 
 new_body_96434:
-    %_96439 = trunc i64 %fv_10_96416 to i15
-    %fv_9_96441.zext = zext i15 %_96439 to i16 ; add one more bit for gep index as it is treated as signed value
-    %fv_9_96441 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_9_96438, i64 0, i16 %fv_9_96441.zext
-    %_96443 = load float, float* %fv_9_96441
-    %_96446 = urem i64 %fv_10_96416, 32768
+    %_96439 = trunc i64 %fv_4_96416 to i15
+    %fv_3_96441.zext = zext i15 %_96439 to i16 ; add one more bit for gep index as it is treated as signed value
+    %fv_3_96441 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_9_96438, i64 0, i16 %fv_3_96441.zext
+    %_96443 = load float, float* %fv_3_96441
+    %_96446 = urem i64 %fv_4_96416, 32768
     %_96451 = urem i64 %_96446, 32768
     %_96456 = trunc i64 %_96451 to i15
     %_96458.zext = zext i15 %_96456 to i16 ; add one more bit for gep index as it is treated as signed value
     %_96458 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_1_96454, i64 0, i16 %_96458.zext
     %_96460 = load float, float* %_96458
-    %fv_4_96479.zext = zext i15 %_96439 to i16 ; add one more bit for gep index as it is treated as signed value
-    %fv_4_96479 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_0_96477, i64 0, i16 %fv_4_96479.zext
-    %_96481 = load float, float* %fv_4_96479
-    %fv_0_96484 = add nuw nsw i64 1, %fv_10_96416
+    %fv_16_96479.zext = zext i15 %_96439 to i16 ; add one more bit for gep index as it is treated as signed value
+    %fv_16_96479 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_0_96477, i64 0, i16 %fv_16_96479.zext
+    %_96481 = load float, float* %fv_16_96479
+    %fv_12_96484 = add nuw nsw i64 1, %fv_4_96416
     %_96488 = fadd fast float %_96460, %_96443
     %_96490 = tail call float @llvm.maxnum.f32(float 0x0000000000000000, float %_96488)
     %_96493 = fmul fast float %_96490, %_96481
@@ -164,25 +164,25 @@ new_body_96259:
 
 head_96264:
     %fv_10_96279 = phi float [ 0x0000000000000000, %new_body_96259 ], [ %_96380, %new_body_96286 ]
-    %fv_4_96267 = phi i64 [ 0, %new_body_96259 ], [ %fv_2_96365, %new_body_96286 ]
-    %_96270 = icmp ult i64 %fv_4_96267, 32768
+    %fv_2_96267 = phi i64 [ 0, %new_body_96259 ], [ %fv_15_96365, %new_body_96286 ]
+    %_96270 = icmp ult i64 %fv_2_96267, 32768
     br i1 %_96270, label %new_body_96286, label %new_exit_96271
 
 new_body_96286:
-    %_96307 = trunc i64 %fv_4_96267 to i15
-    %fv_6_96322.zext = zext i15 %_96307 to i16 ; add one more bit for gep index as it is treated as signed value
-    %fv_6_96322 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_5_96304, i64 0, i16 %fv_6_96322.zext
-    %_96324 = load float, float* %fv_6_96322
-    %_96327 = urem i64 %fv_4_96267, 32768
+    %_96307 = trunc i64 %fv_2_96267 to i15
+    %fv_3_96322.zext = zext i15 %_96307 to i16 ; add one more bit for gep index as it is treated as signed value
+    %fv_3_96322 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_5_96304, i64 0, i16 %fv_3_96322.zext
+    %_96324 = load float, float* %fv_3_96322
+    %_96327 = urem i64 %fv_2_96267, 32768
     %_96332 = urem i64 %_96327, 32768
     %_96337 = trunc i64 %_96332 to i15
     %_96339.zext = zext i15 %_96337 to i16 ; add one more bit for gep index as it is treated as signed value
     %_96339 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_0_96335, i64 0, i16 %_96339.zext
     %_96341 = load float, float* %_96339
-    %fv_9_96360.zext = zext i15 %_96307 to i16 ; add one more bit for gep index as it is treated as signed value
-    %fv_9_96360 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_7_96358, i64 0, i16 %fv_9_96360.zext
-    %_96362 = load float, float* %fv_9_96360
-    %fv_2_96365 = add nuw nsw i64 1, %fv_4_96267
+    %fv_6_96360.zext = zext i15 %_96307 to i16 ; add one more bit for gep index as it is treated as signed value
+    %fv_6_96360 = getelementptr inbounds [32768 x float], [32768 x float]* %fv_7_96358, i64 0, i16 %fv_6_96360.zext
+    %_96362 = load float, float* %fv_6_96360
+    %fv_15_96365 = add nuw nsw i64 1, %fv_2_96267
     %_96369 = fadd fast float %_96341, %_96324
     %_96373 = tail call float @llvm.maxnum.f32(float 0x0000000000000000, float %_96369)
     %_96378 = fmul fast float %_96373, %_96362
