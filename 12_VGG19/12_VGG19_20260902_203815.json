@@ -1,0 +1,122 @@
+{
+  "model_dir": "12_VGG19",
+  "model_name": "VGG19",
+  "run_id": "20260902_203815",
+  "generated_at": "2026-09-03T04:20:02",
+  "reference_source": "torch:torch_ref/12_VGG19.py",
+  "reps": 10,
+  "atol": 0.01,
+  "rtol": 0.001,
+  "output_shape": [
+    10,
+    1000
+  ],
+  "timing_summary": {
+    "mim_llvm": {
+      "reps": 10,
+      "median_ns": 8809680097.0,
+      "mean_ns": 8682021967.3,
+      "min_ns": 7886108767.0,
+      "max_ns": 9577344773.0,
+      "median_ms": 8809.68,
+      "rel_median": 1.0
+    },
+    "mim_mlir_llvm": {
+      "reps": 10,
+      "median_ns": 77674278263.0,
+      "mean_ns": 77828293956.7,
+      "min_ns": 75437212426.0,
+      "max_ns": 80579398525.0,
+      "median_ms": 77674.278,
+      "rel_median": 8.817
+    },
+    "mlir_llvm": {
+      "reps": 10,
+      "median_ns": 9759252383.0,
+      "mean_ns": 9961839026.5,
+      "min_ns": 8942981597.0,
+      "max_ns": 11066227787.0,
+      "median_ms": 9759.252,
+      "rel_median": 1.108
+    }
+  },
+  "fastest_pipeline": "mim_llvm",
+  "pipelines": {
+    "mim_llvm": {
+      "ref_mean_abs": 4.3183094729157595e+29,
+      "max_abs_diff": 6.006850166210189e+24,
+      "mean_abs_diff": 1.2726975109141358e+24,
+      "max_rel_diff": 0.010485056787729263,
+      "max_diff_over_scale": 1.39101894092164e-05,
+      "rms_diff_over_scale": 3.694423639899469e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0017,
+      "allclose": true,
+      "top1_match": "10/10",
+      "status": "PASS",
+      "timing": {
+        "model": "VGG19",
+        "pipeline": "mim_llvm",
+        "run_id": "20260902_203815",
+        "weights_path": "./12_VGG19/VGG19_weights.bin",
+        "input_path": "./12_VGG19/VGG19_input.bin",
+        "output_path": "./12_VGG19/outputs/output_mim_llvm.bin",
+        "reps": 10,
+        "median_ns": 8809680097.0,
+        "mean_ns": 8682021967.3,
+        "min_ns": 7886108767.0,
+        "max_ns": 9577344773.0
+      }
+    },
+    "mim_mlir_llvm": {
+      "ref_mean_abs": 4.3183094729157595e+29,
+      "max_abs_diff": 7.631344236317347e+24,
+      "mean_abs_diff": 1.6091347057075975e+24,
+      "max_rel_diff": 0.018024422228336334,
+      "max_diff_over_scale": 1.767206413205713e-05,
+      "rms_diff_over_scale": 4.6808572733425535e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0016,
+      "allclose": true,
+      "top1_match": "10/10",
+      "status": "PASS",
+      "timing": {
+        "model": "VGG19",
+        "pipeline": "mim_mlir_llvm",
+        "run_id": "20260902_203815",
+        "weights_path": "./12_VGG19/VGG19_weights.bin",
+        "input_path": "./12_VGG19/VGG19_input.bin",
+        "output_path": "./12_VGG19/outputs/output_mim_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 77674278263.0,
+        "mean_ns": 77828293956.7,
+        "min_ns": 75437212426.0,
+        "max_ns": 80579398525.0
+      }
+    },
+    "mlir_llvm": {
+      "ref_mean_abs": 4.3183094729157595e+29,
+      "max_abs_diff": 8.179138748330226e+24,
+      "mean_abs_diff": 1.6171088872942107e+24,
+      "max_rel_diff": 0.01500721462070942,
+      "max_diff_over_scale": 1.8940603695227765e-05,
+      "rms_diff_over_scale": 4.693681148637552e-06,
+      "frac_pointwise_rel_gt_1e3": 0.0017,
+      "allclose": true,
+      "top1_match": "10/10",
+      "status": "PASS",
+      "timing": {
+        "model": "VGG19",
+        "pipeline": "mlir_llvm",
+        "run_id": "20260902_203815",
+        "weights_path": "./12_VGG19/VGG19_weights.bin",
+        "input_path": "./12_VGG19/VGG19_input.bin",
+        "output_path": "./12_VGG19/outputs/output_mlir_llvm.bin",
+        "reps": 10,
+        "median_ns": 9759252383.0,
+        "mean_ns": 9961839026.5,
+        "min_ns": 8942981597.0,
+        "max_ns": 11066227787.0
+      }
+    }
+  },
+  "all_pass": true
+}
