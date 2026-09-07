@@ -35,22 +35,17 @@ Modes:
 
 Env:
   LOWER_SH_DEBUG_PRINT_PASSES=1   print the exact mlir-opt pass list per dir
+  LOWER_SH_FUSE=1                 add --linalg-fuse-elementwise-ops to the
+                                  default mode. OFF by default because it is
+                                  MEASURED SLOWER -- see the comment on that
+                                  pass below before reaching for it
 
-Known-bad input (pre-existing, NOT caused by this pipeline -- it fails under
---baseline too, and fails plain \`mlir-opt <file>\` with no passes at all):
+Expect 16/16 successes on a full run of this tree.
 
-  04_LeNet5/mim_mlir_llvm/LeNet5_mim_mlir.mlir
-    'linalg.generic' op expected operand #0 rank (3) to match the result
-    rank of indexing_map (4)
-
-Invalid MLIR out of the mim frontend: a conv linalg.generic declares rank-4
-indexing maps but is handed a rank-3 operand. The sibling
-06_GoogleNetInceptionModule mim file hits the same class of shape mismatch in
-older revisions and was fixed by emitting tensor.expand_shape to lift the
-rank-2 1x1-conv weights to rank 4 before the conv -- that is the pattern to
-follow for LeNet5. Fix belongs in the mim frontend.
-
-Expect 15/16 successes on a full run of this tree.
+(04_LeNet5/mim_mlir_llvm used to be the one known-bad input -- an invalid conv
+linalg.generic with rank-4 indexing maps over a rank-3 operand, which failed
+plain \`mlir-opt <file>\` with no passes at all. The mim frontend has since
+been fixed; that file now parses, verifies and lowers.)
 EOF
   exit 1
 }
@@ -321,6 +316,47 @@ module attributes {transform.with_named_sequence} {
     transform.yield
   }
 
+  // mim's blocked FC contraction, rank 5: (m_outer, n_outer, m_inner, n_inner, k)
+  //
+  // The map_reduce_post axiom made mim emit every fully-connected layer in a
+  // blocked, transposed layout -- output map (d0, d2, d1, d3) over a
+  // tensor<M/2 x 2 x N/4 x 4>, B always (d1 * 4 + d3, d4) -- instead of the
+  // rank-3 (m, n, k) contraction it used to emit. Shape verified identical
+  // across all 8 models in this tree; only the A operand varies, picking up
+  // floordiv/mod when the producer's blocking differs from this op's.
+  //
+  // Rank 5 matched NO matcher below, so foreach_match silently skipped every
+  // FC layer -- straight to --convert-linalg-to-loops as an untiled nest with
+  // the accumulator in memory, i.e. exactly the scalar case this whole file
+  // exists to avoid. Measured on 01_MLP mim (216 packed FP ops before the
+  // axiom, 64 packed + 384 scalar after).
+  //
+  // d2 x d3 = 2 x 4 is the register block mim already chose, so leave those
+  // two whole and tile the rest: 16 x 8 x 32 is 32 x 32 x 32 in M x N x K --
+  // the same effective tile as @tile_matmul, and for the same reason (small
+  // enough for LLVM to register-promote the accumulator).
+  //
+  // Measured, same P-core, back-to-back, output bit-identical:
+  //     03_DeepNarrowMLP/mim_mlir_llvm   15.49 s -> 5.97 s   2.6x
+  //     01_MLP/mim_mlir_llvm             80.37 s -> 17.68 s  4.5x
+  // With 01_MLP/mlir_llvm at 36.32 s on the same core, that turns the mim
+  // MLIR path from 2.2x slower than torch-mlir into 2.1x faster.
+  //
+  // Tile sizes were screened on 03_DeepNarrowMLP, all bit-identical:
+  //     [16,8,0,0,32]  5.97 s   <- this one
+  //     [32,16,0,0,32] 6.18 s
+  //     [16,8,0,0,16]  6.23 s
+  //     [8,8,0,0,32]   6.64 s
+  //     [8,8,0,0,64]   7.36 s
+  //     [16,16,0,0,32] 8.18 s
+  //     [16,8,0,0,128] 9.63 s
+  //     [32,8,0,0,32] 12.74 s
+  transform.named_sequence @tile_blocked_matmul(%op: !transform.any_op {transform.consumed}) {
+    %t, %l0, %l1, %l2 = transform.structured.tile_using_for %op tile_sizes [16, 8, 0, 0, 32]
+        : (!transform.any_op) -> (!transform.any_op, !transform.any_op, !transform.any_op, !transform.any_op)
+    transform.yield
+  }
+
   // Batch matmul, rank 4: (b, m, n, k). Batch left whole.
   transform.named_sequence @tile_batch_matmul(%op: !transform.any_op {transform.consumed}) {
     %t, %l0, %l1, %l2, %l3 = transform.structured.tile_using_for %op tile_sizes [1, 32, 32, 32]
@@ -351,6 +387,23 @@ module attributes {transform.with_named_sequence} {
     ^bb0(%c: !transform.any_op):
       %rank = transform.match.structured.rank %c : (!transform.any_op) -> !transform.param<i64>
       %n = transform.param.constant 4 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %rank, %n : !transform.param<i64>
+      transform.match.structured.body %c { contraction = ["arith.mulf", "arith.addf"] } : !transform.any_op
+      transform.match.structured.yield
+    }
+    transform.yield %c0 : !transform.any_op
+  }
+
+  // Rank 5 is mim's blocked FC contraction (see @tile_blocked_matmul). The
+  // body filter is load-bearing here: this tree also has 5 rank-5 ops in
+  // 04_LeNet5, 8 in 05_AlexNet, 6 in 06_GoogleNet, 16 in 11_VGG16 and 19 in
+  // 12_VGG19 that are elementwise post-ops (addf/maxnumf) or reductions with
+  // no multiply, and tiling those as contractions would be wrong.
+  transform.named_sequence @match_rank5(%c0: !transform.any_op {transform.readonly}) -> !transform.any_op {
+    transform.match.structured %c0 : !transform.any_op {
+    ^bb0(%c: !transform.any_op):
+      %rank = transform.match.structured.rank %c : (!transform.any_op) -> !transform.param<i64>
+      %n = transform.param.constant 5 : i64 -> !transform.param<i64>
       transform.match.param.cmpi eq %rank, %n : !transform.param<i64>
       transform.match.structured.body %c { contraction = ["arith.mulf", "arith.addf"] } : !transform.any_op
       transform.match.structured.yield
@@ -394,12 +447,54 @@ module attributes {transform.with_named_sequence} {
     transform.yield %c0 : !transform.any_op
   }
 
+  // mim's split-output-height convolution: rank 8, but THREE inputs. The
+  // third is a dummy `tensor.empty()` mapped (d2, d3) whose only job is to
+  // bound the two split height dims -- nothing else in the op does, which is
+  // why it cannot simply be erased (erase_unnecessary_inputs correctly leaves
+  // it alone). Its bbarg is unused in the body, so the block has 4 arguments
+  // and @match_rank8's body filter rejects the op outright:
+  //
+  //     matcher match_rank8 failed: contraction: expected block with 3 arguments
+  //
+  // That is a silent miss -- foreach_match just moves on -- and it cost every
+  // mim convolution its interchange: 0/5 on AlexNet, 0/6 on GoogleNet, 3/13 on
+  // VGG16, 4/16 on VGG19, 1/2 on LeNet5, all of them left as scalar
+  // accumulator loops at ~1.9 GFLOP/s while the torch-mlir side of the same
+  // model got 5/5, 6/6, 13/13, 16/16, 2/2. On AlexNet at batch 1024 that is
+  // ~2.2 TFLOP of convolution running unvectorised, which is what pushed
+  // 05_AlexNet/mim_mlir_llvm past the 8000 s reporter timeout. Older mim
+  // output (commit cf66237) emitted these convs at rank 7 with 3 block args
+  // and they all matched, so this is a regression from the newer frontend
+  // shape, not from this pipeline.
+  //
+  // So match these on structure that survives the extra operand: rank 8 plus
+  // three inputs. Pooling stays excluded by construction, as before -- mim
+  // pooling is rank 6 with 2 inputs, so it cannot reach this matcher. The
+  // action is the existing rank-8 one unchanged: mim's domain is
+  // (n, f, oh_outer, oh_inner, ow, c, kh, kw), so `ow` sits at position 4,
+  // exactly where @conv_ngchw_ow_innermost expects it.
+  transform.named_sequence @match_rank8_3in(%c0: !transform.any_op {transform.readonly}) -> !transform.any_op {
+    transform.match.structured %c0 : !transform.any_op {
+    ^bb0(%c: !transform.any_op):
+      %rank = transform.match.structured.rank %c : (!transform.any_op) -> !transform.param<i64>
+      %n = transform.param.constant 8 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %rank, %n : !transform.param<i64>
+      %nin = transform.match.structured.num_inputs %c : (!transform.any_op) -> !transform.param<i64>
+      %three = transform.param.constant 3 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %nin, %three : !transform.param<i64>
+      transform.match.structured.yield
+    }
+    transform.yield %c0 : !transform.any_op
+  }
+
   transform.named_sequence @__transform_main(%root: !transform.any_op) {
     transform.foreach_match in %root
       @match_rank7 -> @conv_nchw_ow_innermost,
       @match_rank8 -> @conv_ngchw_ow_innermost,
+      @match_rank8_3in -> @conv_ngchw_ow_innermost,
       @match_rank6 -> @conv_depthwise_ow_innermost,
       @match_rank3 -> @tile_matmul,
+      @match_rank5 -> @tile_blocked_matmul,
       @match_rank4 -> @tile_batch_matmul
       : (!transform.any_op) -> !transform.any_op
     transform.yield
@@ -470,6 +565,39 @@ for dir in "${dirs[@]}"; do
       --transform-interpreter="entry-point=__transform_main"
       --canonicalize --cse
     )
+
+    # --linalg-fuse-elementwise-ops: OFF by default, and this is why.
+    #
+    # It looks like an obvious win -- it deletes 6-19 elementwise generics per
+    # model, each one a full-size intermediate buffer plus its store and
+    # reload (AlexNet mim 31 -> 23 generics, VGG16 mim 58 -> 42). It is not.
+    # Measured, one rep, back-to-back, batch as shipped:
+    #
+    #     05_AlexNet/mim_mlir_llvm       89.45 s -> 148.35 s   1.66x SLOWER
+    #     03_DeepNarrowMLP/mim_mlir_llvm 15.92 s ->  16.82 s   1.06x SLOWER
+    #
+    # (outputs bit-identical either way, so this is purely a speed question.)
+    #
+    # The reason is that the pass only requires the PRODUCER to be
+    # all-parallel; it is happy to fuse into a consumer that has reduction
+    # loops. So mim's bias+relu, which is one elementwise pass over the conv
+    # result, gets pulled inside the NEXT op's reduction nest and recomputed
+    # once per iteration of it: ~2.2x for a 3x3/stride-2 max-pool consumer,
+    # but 4096x for an FC consumer, where the relu lands inside the k loop.
+    # Trading one streaming pass over a buffer for thousands of recomputes is
+    # a bad trade even when the buffer is a gigabyte.
+    #
+    # If you do enable it: it MUST stay after --transform-interpreter. Ahead of
+    # the interpreter it silently destroys the matmul tiling, because a
+    # consumer whose body is no longer a bare mulf/addf contraction stops
+    # matching @match_rank3 and foreach_match just moves on. Measured on the
+    # linalg stage, scf.for nests from tiling with fusion moved before the
+    # interpreter: DeepNarrowMLP 51 -> 3, AlexNet 9 -> 0, VGG16 6 -> 0,
+    # VGG19 6 -> 0. In the position below it is inert to every matcher --
+    # interchange and tiling counts unchanged on all 16 model/frontend pairs.
+    if [[ -n "${LOWER_SH_FUSE:-}" ]]; then
+      PASSES+=(--linalg-fuse-elementwise-ops --canonicalize --cse)
+    fi
   fi
 
   PASSES+=(

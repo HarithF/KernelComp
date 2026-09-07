@@ -76,6 +76,7 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -343,6 +344,17 @@ def find_pipeline_binaries(model_dir):
     return pipelines
 
 
+def find_iree_driver(model_dir, name):
+    """The IREE VM pipeline, kept deliberately outside bin/ so that the rest
+    of this tree is unaffected by it: scripts/gen_vm_driver.py writes
+    <model_dir>/iree/<Name>_driver_iree.py alongside the .vmfb it drives.
+    Only consulted when --with-iree is passed; returns a path or None."""
+    driver = os.path.join(model_dir, "iree", f"{name}_driver_iree.py")
+    if os.path.isfile(driver) and os.access(driver, os.X_OK):
+        return driver
+    return None
+
+
 def find_torch_ref_module(model_dir, name):
     """Look for model_dir/torch_ref/*.py. Prefers '<Name>_param.py'; if
     exactly one .py file exists, uses that; otherwise warns and gives up."""
@@ -529,6 +541,7 @@ def run_pipeline(
     timeout,
     run_id,
     expected_size=None,
+    pin_cpu=None,
 ):
     """Returns (array_or_None, timing_dict_or_None). timing_dict is read back
     from the JSON report the driver itself writes (see gen_drivers.py) --
@@ -538,6 +551,24 @@ def run_pipeline(
     out_path = os.path.join(out_dir, f"output_{pname}.bin")
     json_path = os.path.join(out_dir, f"timing_{pname}_{run_id}.json")
     cmd = [binary, weights_path, input_path, str(reps), out_path, run_id, json_path]
+    # CPU pinning (--pin-cpu / PIN_CPU). One taskset prefix is enough for the
+    # whole run: the driver forks a child per rep (see c_fork_helpers() in
+    # gen_drivers.py) and affinity is inherited across fork() and exec(), so
+    # every rep stays on the CPU chosen here.
+    #
+    # This matters more than it looks on a hybrid CPU. On this machine
+    # `lscpu -e=CPU,CORE,MAXMHZ` shows three tiers -- CPUs 0-5 at 6600 MHz
+    # (P-cores), 6-13 at 6300 (E-cores), 14-15 at 2500 (LP E-cores) -- and an
+    # unpinned rep can land on any of them. That is the source of the
+    # bimodality in the earlier reports: 01_MLP/mim_mlir_llvm measured
+    # min 41.2 s / max 76.9 s across the 10 reps of ONE run, and 78.6 s then
+    # 41.9 s as the median of two consecutive runs of a byte-identical input.
+    # Pinned to one P-core the same binary reproduced within 0.08%.
+    #
+    # Pin every pipeline of a model to the SAME cpu, or the cross-pipeline
+    # ratios the report is built on stop meaning anything.
+    if pin_cpu:
+        cmd = ["taskset", "-c", str(pin_cpu)] + cmd
     print(f"[{pname}] running: {' '.join(cmd)}")
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
@@ -760,6 +791,15 @@ def process_model(model_dir, args):
     name, weights_path, input_path = wi
 
     pipelines = find_pipeline_binaries(model_dir)
+    if args.with_iree:
+        iree_driver = find_iree_driver(model_dir, name)
+        if iree_driver:
+            pipelines["iree"] = iree_driver
+        else:
+            print(
+                f"[{name}] note: --with-iree given but no executable "
+                f"iree/{name}_driver_iree.py (run scripts/gen_vm_driver.py)"
+            )
     if not pipelines:
         print(
             f"[{dir_basename}] SKIP: no executables found under {model_dir}/bin "
@@ -804,6 +844,7 @@ def process_model(model_dir, args):
             args.timeout,
             args.run_id,
             expected_out_size,
+            pin_cpu=args.pin_cpu,
         )
         outputs[pname] = arr
         timings[pname] = timing
@@ -859,6 +900,8 @@ def process_model(model_dir, args):
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "reference_source": ref_source,
         "reps": args.reps,
+        "pinned_cpu": args.pin_cpu,
+        "with_iree": args.with_iree,
         "atol": args.atol,
         "rtol": args.rtol,
         "output_shape": shape.output_dims if shape else None,
@@ -937,7 +980,32 @@ def main():
         "an id from elsewhere.",
     )
 
+    ap.add_argument(
+        "--with-iree",
+        action="store_true",
+        help="also run the IREE VM pipeline for models that have one "
+        "(<model_dir>/iree/<Name>_driver_iree.py, from scripts/gen_vm_driver.py). "
+        "Off by default: without it nothing under iree/ is read or run, and "
+        "the reports are exactly what they were before IREE was added.",
+    )
+    ap.add_argument(
+        "--pin-cpu",
+        default=os.environ.get("PIN_CPU"),
+        help="pin every pipeline run to these CPUs via `taskset -c` (e.g. "
+        "'2', '0-5', '2,3'); defaults to $PIN_CPU. Strongly recommended on "
+        "hybrid P/E-core machines -- see the comment in run_pipeline(). The "
+        "value is recorded in each report as \"pinned_cpu\".",
+    )
+
     args = ap.parse_args()
+
+    if args.pin_cpu and shutil.which("taskset") is None:
+        print(
+            "error: --pin-cpu given but `taskset` is not on PATH "
+            "(install util-linux, or drop the flag)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     if args.run_id is None:
         args.run_id = time.strftime("%Y%m%d_%H%M%S", time.gmtime())

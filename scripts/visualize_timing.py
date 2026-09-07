@@ -28,6 +28,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import ScalarFormatter
 
 REFERENCE_VARIANT = "mlir_llvm"
 
@@ -98,6 +99,7 @@ def plot(reports, output_path=None, show=False):
         bars = ax.bar(
             x + offset,
             heights,
+            bottom=1e-300,
             width=bar_width * 0.9,
             label=variant,
             color=colors[variant],
@@ -117,13 +119,32 @@ def plot(reports, output_path=None, show=False):
                 fontsize=8,
             )
 
+    ax.set_yscale("log")
+
+    # Log axes cannot show a bar base of 0, so clamp the view to the data range
+    # with a little headroom on both ends (and always include the 1.0 baseline).
+    finite = [
+        v
+        for _, relative in reports
+        for v in relative.values()
+        if np.isfinite(v) and v > 0
+    ]
+    if finite:
+        ax.set_ylim(min(min(finite), 1.0) / 2.0, max(max(finite), 1.0) * 2.0)
+
+    # Plain decimal tick labels instead of 10^x, on both major and minor ticks.
+    ax.yaxis.set_major_formatter(ScalarFormatter())
+    ax.yaxis.set_minor_formatter(ScalarFormatter())
+    ax.tick_params(axis="y", which="minor", labelsize=7)
+
     ax.axhline(1.0, color="gray", linestyle="--", linewidth=1, zorder=0)
     ax.set_xticks(x)
     ax.set_xticklabels(model_names)
-    ax.set_ylabel(f"Relative median time (vs. '{REFERENCE_VARIANT}' = 1.0)")
+    ax.set_ylabel(f"Relative median time (vs. '{REFERENCE_VARIANT}' = 1.0, log scale)")
     ax.set_title("Pipeline timing comparison across models")
     ax.legend(title="Variants", bbox_to_anchor=(1.02, 1), loc="upper left")
-    ax.grid(axis="y", linestyle=":", alpha=0.5)
+    ax.grid(axis="y", which="major", linestyle=":", alpha=0.5)
+    ax.grid(axis="y", which="minor", linestyle=":", alpha=0.25)
 
     fig.tight_layout()
 
