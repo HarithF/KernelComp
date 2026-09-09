@@ -357,6 +357,56 @@ module attributes {transform.with_named_sequence} {
     transform.yield
   }
 
+  // ---- mim's contractions over a SPLIT reduction ------------------------
+  //
+  // mim emits some contractions with the reduction expressed as two
+  // dimensions (a `tensor<AxBxf32>` dummy operand is what bounds them), and
+  // it always orders them with both reduction dims INNERMOST. That is the
+  // one arrangement that cannot vectorise: the innermost loop is a
+  // reduction, and nothing here is built with -ffast-math so LLVM may not
+  // reassociate an FP reduction on its own (see @tile_matmul).
+  //
+  // The fix in every case is the same, and it is the same one the conv
+  // actions use: move the LAST PARALLEL dim innermost. In each of these ops
+  // that dim is contiguous in the output and in one operand, while the other
+  // operand is invariant along it and becomes a broadcast -- i.e. exactly the
+  // ordinary matmul shape, which vectorises along a parallel dim and so needs
+  // no fast-math at all. Reduction dims keep their relative order, so the
+  // accumulation order is unchanged and the result is bit-identical.
+  //
+  // Two ranks occur. Both are reached only via their own matcher, because
+  // @match_rank4 / @match_rank5 cannot see these ops at all: the extra dummy
+  // operand gives the block one argument more than
+  // `body { contraction = ... }` accepts, the same silent miss documented on
+  // @match_rank8_3in.
+
+  // Rank 4: (m, n, k_outer, k_inner) -> (m, k_outer, k_inner, n)
+  //
+  // 46/47_NetVlad's assignment step, out[m][n] = sum_k x[..][k] * clusters[k][n]
+  // with k=512 emitted as 128 x 4. n is only 32 wide (4 AVX2 vectors) but it
+  // is contiguous in both clusters and the output. 3.36 GMAC, 49.5% of
+  // NetVlad's arithmetic -- and before this matcher existed it was matched by
+  // nothing at all and went to --convert-linalg-to-loops untiled.
+  transform.named_sequence @contract_split_k_r4_n_innermost(%op: !transform.any_op {transform.consumed}) {
+    transform.structured.interchange %op iterator_interchange = [0, 2, 3, 1]
+        : (!transform.any_op) -> !transform.any_op
+    transform.yield
+  }
+
+  // Rank 5: (b, m, n, k_outer, k_inner)  ->  (b, m, k_outer, k_inner, n)
+  //
+  // 46/47_NetVlad's vlad step, out[b][m][n] = sum_k assignment[b][m][k] *
+  // x[b][k][n], with k=100 emitted as 25 x 4. n is 512 wide and contiguous in
+  // both x and the output. The other 3.36 GMAC, the other 49.5%.
+  //
+  // Tree-wide there are 47 rank-5 mulf/addf contractions: 45 are mim's
+  // blocked FC (PPPPR, handled by @tile_blocked_matmul) and exactly these 2.
+  transform.named_sequence @contract_split_k_r5_n_innermost(%op: !transform.any_op {transform.consumed}) {
+    transform.structured.interchange %op iterator_interchange = [0, 1, 3, 4, 2]
+        : (!transform.any_op) -> !transform.any_op
+    transform.yield
+  }
+
   // Batch matmul, rank 4: (b, m, n, k). Batch left whole.
   transform.named_sequence @tile_batch_matmul(%op: !transform.any_op {transform.consumed}) {
     %t, %l0, %l1, %l2, %l3 = transform.structured.tile_using_for %op tile_sizes [1, 32, 32, 32]
@@ -405,6 +455,18 @@ module attributes {transform.with_named_sequence} {
       %rank = transform.match.structured.rank %c : (!transform.any_op) -> !transform.param<i64>
       %n = transform.param.constant 5 : i64 -> !transform.param<i64>
       transform.match.param.cmpi eq %rank, %n : !transform.param<i64>
+      // Pin the ITERATOR SIGNATURE, not just the rank. @tile_blocked_matmul's
+      // [16, 8, 0, 0, 32] is tuned for mim's blocked FC specifically:
+      // (m_outer, n_outer, m_inner, n_inner, k) = four parallel dims then one
+      // reduction, with d2 x d3 = 2 x 4 deliberately left whole as the
+      // register block. Rank alone also caught 46/47_NetVlad's rank-5 vlad
+      // contraction, which is (b, k, d, n, m) -- THREE parallel dims and TWO
+      // reductions -- so that schedule tiled one of its reduction dims by 32
+      // and left the other whole, a layout it was never screened against.
+      // "All dims but the last are parallel, and the last is a reduction" is
+      // exactly the blocked-FC shape and excludes the NetVlad op.
+      transform.match.structured.dim %c[except(-1)] { parallel } : !transform.any_op
+      transform.match.structured.dim %c[-1] { reduction } : !transform.any_op
       transform.match.structured.body %c { contraction = ["arith.mulf", "arith.addf"] } : !transform.any_op
       transform.match.structured.yield
     }
@@ -473,6 +535,55 @@ module attributes {transform.with_named_sequence} {
   // action is the existing rank-8 one unchanged: mim's domain is
   // (n, f, oh_outer, oh_inner, ow, c, kh, kw), so `ow` sits at position 4,
   // exactly where @conv_ngchw_ow_innermost expects it.
+  // Rank 4 with two trailing reductions and three inputs: see
+  // @contract_split_k_r4_n_innermost. n_ins == 3 is deliberate -- it excludes
+  // 15_DenseNet121's rank-4 PPRR op, which carries FOUR inputs and whose
+  // operand roles have not been checked against the last-parallel-innermost
+  // rule. Tree-wide this matches exactly the two NetVlad ops.
+  transform.named_sequence @match_rank4_2red(%c0: !transform.any_op {transform.readonly}) -> !transform.any_op {
+    transform.match.structured %c0 : !transform.any_op {
+    ^bb0(%c: !transform.any_op):
+      %rank = transform.match.structured.rank %c : (!transform.any_op) -> !transform.param<i64>
+      %n = transform.param.constant 4 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %rank, %n : !transform.param<i64>
+      %nin = transform.match.structured.num_inputs %c : (!transform.any_op) -> !transform.param<i64>
+      %three = transform.param.constant 3 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %nin, %three : !transform.param<i64>
+      transform.match.structured.dim %c[0, 1] { parallel } : !transform.any_op
+      transform.match.structured.dim %c[2, 3] { reduction } : !transform.any_op
+      transform.match.structured.yield
+    }
+    transform.yield %c0 : !transform.any_op
+  }
+
+  // Rank 5 with TWO trailing reductions: mim's batched matmul over a split
+  // reduction (see @contract_split_k_r5_n_innermost). This is the complement of
+  // @match_rank5, which requires exactly one reduction and takes the blocked
+  // FC; between them the two cover every rank-5 contraction in the tree.
+  //
+  // The body filter is not usable here for the same reason as
+  // @match_rank8_3in: the op carries a third, dummy shape operand bounding
+  // the two split reduction dims, so its block has four arguments and
+  // `body { contraction = ... }` rejects it outright. Match on arity plus the
+  // iterator signature instead -- three leading parallel dims and two
+  // trailing reductions is specific enough that nothing else in the tree
+  // reaches it.
+  transform.named_sequence @match_rank5_2red(%c0: !transform.any_op {transform.readonly}) -> !transform.any_op {
+    transform.match.structured %c0 : !transform.any_op {
+    ^bb0(%c: !transform.any_op):
+      %rank = transform.match.structured.rank %c : (!transform.any_op) -> !transform.param<i64>
+      %n = transform.param.constant 5 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %rank, %n : !transform.param<i64>
+      %nin = transform.match.structured.num_inputs %c : (!transform.any_op) -> !transform.param<i64>
+      %three = transform.param.constant 3 : i64 -> !transform.param<i64>
+      transform.match.param.cmpi eq %nin, %three : !transform.param<i64>
+      transform.match.structured.dim %c[0, 1, 2] { parallel } : !transform.any_op
+      transform.match.structured.dim %c[3, 4] { reduction } : !transform.any_op
+      transform.match.structured.yield
+    }
+    transform.yield %c0 : !transform.any_op
+  }
+
   transform.named_sequence @match_rank8_3in(%c0: !transform.any_op {transform.readonly}) -> !transform.any_op {
     transform.match.structured %c0 : !transform.any_op {
     ^bb0(%c: !transform.any_op):
@@ -495,7 +606,9 @@ module attributes {transform.with_named_sequence} {
       @match_rank6 -> @conv_depthwise_ow_innermost,
       @match_rank3 -> @tile_matmul,
       @match_rank5 -> @tile_blocked_matmul,
-      @match_rank4 -> @tile_batch_matmul
+      @match_rank4 -> @tile_batch_matmul,
+      @match_rank5_2red -> @contract_split_k_r5_n_innermost,
+      @match_rank4_2red -> @contract_split_k_r4_n_innermost
       : (!transform.any_op) -> !transform.any_op
     transform.yield
   }

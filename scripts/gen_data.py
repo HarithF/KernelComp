@@ -35,8 +35,11 @@ import argparse
 import os
 import re
 import sys
+import zlib
 
 import numpy as np
+
+import param_manifest
 
 # ---------------------------------------------------------------------------
 # LLVM type parsing
@@ -58,6 +61,32 @@ DEFINE_RE = re.compile(
     r"define\s+.*?@(?P<name>[A-Za-z_][\w.]*)\s*\((?P<args>.*?)\)\s*\{",
     re.DOTALL,
 )
+
+# Type qualifiers / parameter attributes that can decorate a type but carry no
+# shape information, e.g. '[128 x [8192 x float]] addrspace(0)* nonnull'.
+QUALIFIER_RE = re.compile(
+    r"\s*\b(?:addrspace|dereferenceable(?:_or_null)?|align)\s*\(?\s*\d+\s*\)?"
+)
+BARE_ATTRS = ("nonnull", "noalias", "nocapture", "readonly", "writeonly", "readnone")
+
+
+def clean_type(type_str):
+    """Reduce an LLVM type string to its bare (possibly array) type.
+
+    Strips pointer '*'s, `addrspace(N)` / `align N` / `dereferenceable(N)`
+    qualifiers and bare parameter attributes, in any order:
+        '[128 x [8192 x float]] addrspace(0)*' -> '[128 x [8192 x float]]'
+    """
+    s = type_str.strip()
+    prev = None
+    while prev != s:
+        prev = s
+        s = QUALIFIER_RE.sub("", s).strip()
+        s = s.rstrip("*").strip()
+        for attr in BARE_ATTRS:
+            if s.endswith(attr):
+                s = s[: -len(attr)].strip()
+    return s
 
 
 def split_top_level(s, sep=","):
@@ -116,15 +145,16 @@ def parse_array_type(type_str):
 
 def parse_param(param_str):
     """Parse a single function parameter, e.g.
-    '[16384 x [16384 x float]]* %_96446' -> (dims, base_type).
+    '[16384 x [16384 x float]]* %_96446' -> (dims, base_type, ssa_name).
     Handles params with or without a trailing '%name'.
     """
     s = param_str.strip()
-    m = re.match(r"^(.*?)\s+%\S+$", s)
+    m = re.match(r"^(.*?)\s+%(\S+)$", s)
     type_part = m.group(1).strip() if m else s
-    type_part = type_part.rstrip("*").strip()
+    ssa_name = m.group(2) if m else None
+    type_part = clean_type(type_part)
     dims, base = parse_array_type(type_part)
-    return dims, base
+    return dims, base, ssa_name
 
 
 def parse_signature(ll_text, filename_hint=None):
@@ -140,13 +170,21 @@ def parse_signature(ll_text, filename_hint=None):
     ret_m = re.search(
         r"define\s+(.*?)\s+@" + re.escape(name) + r"\s*\(", ll_text, re.DOTALL
     )
-    ret_type_str = ret_m.group(1).strip().rstrip("*").strip()
+    ret_type_str = clean_type(ret_m.group(1))
     ret_dims, ret_base = parse_array_type(ret_type_str)
 
     params = []
     for p in split_top_level(args_str):
-        dims, base = parse_param(p)
-        params.append({"dims": dims, "base": base, "raw": p})
+        dims, base, ssa_name = parse_param(p)
+        params.append(
+            {
+                "dims": dims,
+                "base": base,
+                "raw": p,
+                "ssa_name": ssa_name,
+                "canonical": param_manifest.demangle_mim_name(ssa_name),
+            }
+        )
 
     return {
         "name": name,
@@ -168,14 +206,49 @@ def total_elems(dims):
     return n
 
 
+def drop_weight_bias_pairs(params, candidates):
+    """Remove candidates that are provably a Linear/Conv WEIGHT, not the input.
+
+    A multi-dimensional parameter immediately followed by a 1-D parameter
+    whose length equals the multi-dim one's leading dimension is a
+    (weight, bias) pair. The model input is never followed by its own bias,
+    so any parameter in that shape can be ruled out.
+    """
+    kept = []
+    for i in candidates:
+        nxt = params[i + 1] if i + 1 < len(params) else None
+        is_weight_of_pair = (
+            len(params[i]["dims"]) > 1
+            and nxt is not None
+            and len(nxt["dims"]) == 1
+            and nxt["dims"][0] == params[i]["dims"][0]
+        )
+        if not is_weight_of_pair:
+            kept.append(i)
+    return kept or candidates
+
+
 def identify_input_index(sig):
     """Return the index into sig['params'] that best represents the model's
-    input tensor: the parameter whose leading dimension matches the batch
-    size (the return type's leading dimension), preferring multi-dimensional
-    tensors over flat bias-like vectors, and the largest one among ties.
+    input tensor.
+
+    First choice is the argument mim named after a `forward()` parameter
+    (`l_x_`) rather than after module state (`l_self_...`) -- see
+    param_manifest.is_mim_forward_arg. That is exact, and it is what the
+    manifest then records so gen_drivers.py and reporter.py never have to
+    re-run this guess at all.
     """
-    batch = sig["return_dims"][0] if sig["return_dims"] else None
     params = sig["params"]
+
+    by_name = [
+        i
+        for i, p in enumerate(params)
+        if param_manifest.is_mim_forward_arg(p.get("ssa_name"))
+    ]
+    if by_name:
+        return max(by_name, key=lambda i: total_elems(params[i]["dims"]))
+
+    batch = sig["return_dims"][0] if sig["return_dims"] else None
 
     candidates = [
         i
@@ -196,6 +269,8 @@ def identify_input_index(sig):
         # Last resort: assume the largest tensor is the input.
         candidates = list(range(len(params)))
 
+    candidates = drop_weight_bias_pairs(params, candidates)
+
     return max(candidates, key=lambda i: total_elems(params[i]["dims"]))
 
 
@@ -210,7 +285,10 @@ def dtype_for(base):
     return TYPE_SIZES[base][0]
 
 
-def gen_random_array(dims, base, rng):
+def gen_input_array(dims, base, rng):
+    """The model input: standard normal, i.e. already unit-variance, which is
+    what the weight initialization in param_manifest.init_array assumes when
+    it keeps activations O(1) through the stack."""
     dtype = dtype_for(base)
     n = total_elems(dims)
     if np.issubdtype(dtype, np.floating):
@@ -238,7 +316,73 @@ def find_mim_llvm_ll_files(root):
                     yield os.path.join(dirpath, fn), model_root
 
 
-def process_file(ll_path, model_root, rng, dry_run=False, force=False):
+def build_manifest(sig, input_idx, name, seed):
+    """Describe the blob layout: one entry per weight slot, in the order it is
+    written, each carrying its canonical torch name and byte offset.
+    """
+    params = sig["params"]
+
+    # `offset` is in elements, which is only meaningful if every weight slot
+    # shares one element type -- as they all do in this tree. Rather than
+    # silently emitting offsets that mean two different things, refuse.
+    weight_bases = {p["base"] for i, p in enumerate(params) if i != input_idx}
+    if len(weight_bases) > 1:
+        raise ValueError(
+            f"{name}: weights.bin mixes element types {sorted(weight_bases)}; "
+            f"the manifest's element offsets would be ambiguous"
+        )
+    weight_base = next(iter(weight_bases)) if weight_bases else sig["return_base"]
+    dtype_size = TYPE_SIZES[weight_base][1]
+
+    entries = []
+    offset = 0
+    for i, p in enumerate(params):
+        if i == input_idx:
+            continue
+        canonical = p["canonical"]
+        named = canonical is not None
+        count = total_elems(p["dims"])
+        role = param_manifest.classify_role(canonical, p["dims"])
+        entries.append(
+            {
+                "name": canonical if named else f"arg{i}",
+                "named": named,
+                "mim_arg": p["ssa_name"],
+                "mim_index": i,
+                "dims": p["dims"],
+                "base": p["base"],
+                "count": count,
+                "offset": offset,
+                "byte_offset": offset * dtype_size,
+                "role": role,
+            }
+        )
+        offset += count
+
+    input_p = params[input_idx]
+    return {
+        "version": param_manifest.MANIFEST_VERSION,
+        "model": name,
+        "seed": seed,
+        "source_ll": None,  # filled in by the caller, which knows the path
+        "weights_file": f"{name}_weights.bin",
+        "input_file": f"{name}_input.bin",
+        "input": {
+            "mim_arg": input_p["ssa_name"],
+            "mim_index": input_idx,
+            "dims": input_p["dims"],
+            "base": input_p["base"],
+            "count": total_elems(input_p["dims"]),
+        },
+        "output": {"dims": sig["return_dims"], "base": sig["return_base"]},
+        "weight_base": weight_base,
+        "weight_elem_size": dtype_size,
+        "total_floats": offset,
+        "entries": entries,
+    }
+
+
+def process_file(ll_path, model_root, rng, seed=None, dry_run=False, force=False):
     with open(ll_path, "r") as f:
         text = f.read()
 
@@ -248,40 +392,76 @@ def process_file(ll_path, model_root, rng, dry_run=False, force=False):
 
     weights_path = os.path.join(model_root, f"{name}_weights.bin")
     input_path = os.path.join(model_root, f"{name}_input.bin")
+    mpath = param_manifest.manifest_path(model_root, name)
+
+    manifest = build_manifest(sig, input_idx, name, seed)
+    manifest["source_ll"] = os.path.relpath(ll_path, model_root)
 
     print(f"[{name}] {ll_path}")
     print(f"    return shape : {sig['return_dims']} x {sig['return_base']}")
-    for i, p in enumerate(sig["params"]):
-        role = "INPUT" if i == input_idx else "weight"
-        print(f"    param {i:>2} [{role:>6}] : {p['dims']} x {p['base']}")
+    print(
+        f"    input        : {sig['params'][input_idx]['dims']} "
+        f"x {sig['params'][input_idx]['base']}  (arg {input_idx})"
+    )
+    unnamed = [e for e in manifest["entries"] if not e["named"]]
+    for e in manifest["entries"]:
+        print(
+            f"    param {e['mim_index']:>3} [{e['role']:>12}] : "
+            f"{e['dims']} @ +{e['offset']}  {e['name']}"
+        )
+    if unnamed:
+        # Not fatal: these slots are still written and still read, they just
+        # cannot be matched across pipelines or fed to the torch reference by
+        # name, so anything consuming them has to fall back to position.
+        print(
+            f"    NOTE: {len(unnamed)} of {len(manifest['entries'])} slots have "
+            f"no recoverable attribute path "
+            f"({', '.join(e['mim_arg'] or '<anonymous>' for e in unnamed[:4])}"
+            f"{', ...' if len(unnamed) > 4 else ''})"
+        )
 
     if not force and not dry_run:
-        if os.path.exists(weights_path) or os.path.exists(input_path):
+        if (
+            os.path.exists(weights_path)
+            or os.path.exists(input_path)
+            or os.path.exists(mpath)
+        ):
             print(f"    -> SKIP (already exists; use --force to overwrite)")
             return
 
     if dry_run:
         print(f"    -> (dry-run) would write {weights_path}")
         print(f"    -> (dry-run) would write {input_path}")
+        print(f"    -> (dry-run) would write {mpath}")
         return
 
     # Input tensor
     input_param = sig["params"][input_idx]
-    input_arr = gen_random_array(input_param["dims"], input_param["base"], rng)
+    input_arr = gen_input_array(input_param["dims"], input_param["base"], rng)
     input_arr.tofile(input_path)
 
-    # Weights: every other param, concatenated in signature order.
+    # Weights: every non-input param, in manifest order (== signature order).
     with open(weights_path, "wb") as wf:
-        for i, p in enumerate(sig["params"]):
-            if i == input_idx:
-                continue
-            arr = gen_random_array(p["dims"], p["base"], rng)
+        for e in manifest["entries"]:
+            arr, how = param_manifest.init_array(
+                e["role"], e["dims"], e["base"], rng, np
+            )
+            e["init"] = how
             wf.write(arr.tobytes())
+
+    param_manifest.write_manifest(mpath, manifest)
 
     w_size = os.path.getsize(weights_path)
     i_size = os.path.getsize(input_path)
+    expected = manifest["total_floats"] * manifest["weight_elem_size"]
+    if w_size != expected:
+        raise RuntimeError(
+            f"{weights_path}: wrote {w_size} bytes but the manifest describes "
+            f"{expected} -- offsets would be wrong"
+        )
     print(f"    -> wrote {weights_path} ({w_size:,} bytes)")
     print(f"    -> wrote {input_path} ({i_size:,} bytes)")
+    print(f"    -> wrote {mpath}")
 
 
 def main():
@@ -306,14 +486,24 @@ def main():
         print(f"Not a directory: {args.root}", file=sys.stderr)
         sys.exit(1)
 
-    rng = np.random.default_rng(args.seed)
-
     found_any = False
     for ll_path, model_root in find_mim_llvm_ll_files(args.root):
         found_any = True
         try:
+            model_name = os.path.splitext(os.path.basename(ll_path))[0]
+            rng = np.random.default_rng(
+                [
+                    args.seed if args.seed is not None else 0,
+                    zlib.crc32(model_name.encode()),
+                ]
+            )
             process_file(
-                ll_path, model_root, rng, dry_run=args.dry_run, force=args.force
+                ll_path,
+                model_root,
+                rng,
+                seed=args.seed,
+                dry_run=args.dry_run,
+                force=args.force,
             )
         except Exception as e:
             print(f"[ERROR] {ll_path}: {e}", file=sys.stderr)

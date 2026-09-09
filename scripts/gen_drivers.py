@@ -41,6 +41,8 @@ import os
 import re
 import sys
 
+import param_manifest
+
 # ---------------------------------------------------------------------------
 # Shared LLVM type parsing (see also gen_random_data.py)
 # ---------------------------------------------------------------------------
@@ -121,6 +123,13 @@ def strip_name_suffix(param_str):
     s = param_str.strip()
     m = re.match(r"^(.*?)\s+%\S+$", s)
     return m.group(1).strip() if m else s
+
+
+def param_ssa_name(param_str):
+    """'[64 x float]* %l_self_modules_bn1_buffers_running_mean__353946'
+    -> 'l_self_modules_bn1_buffers_running_mean__353946', or None."""
+    m = re.match(r"^.*?\s+%(\S+)$", param_str.strip())
+    return m.group(1) if m else None
 
 
 def parse_pointee_array(type_with_ptr):
@@ -225,9 +234,25 @@ MLIR_BASE_TO_LLVM_BASE = {
 
 
 def parse_mlir_func_signature(text, expected_name=None):
-    """Return (name, params[list of (dims, base)], return_dims, return_base)
-    for the first matching func.func in `text`. If expected_name is given,
-    only a func.func with that exact name is considered."""
+    """Return (name, params, results) for the first matching func.func in
+    `text`, where `params` and `results` are both lists of (dims, base) in
+    declaration order. If expected_name is given, only a func.func with that
+    exact name is considered.
+
+    Each entry of `params` is (dims, base, arg_name). The name matters: the
+    mim frontend's .mlir keeps the traced attribute path
+    ('%l_self_modules_bn1_buffers_running_mean_'), which demangles straight
+    to a canonical torch parameter name, whereas torch-mlir emits %arg0,
+    %arg1, ... and needs its sibling .params.txt to recover the same
+    information. See param_manifest.py.
+
+    `results` has one entry per returned value. MLIR spells a single result
+    bare (`-> tensor<...>`) and several results parenthesised
+    (`-> (tensor<...>, tensor<...>)`); both forms are accepted. 33_VanillaRNN
+    is the only model in this tree that returns more than one value -- an RNN
+    handing back (hidden_state, output) -- and convert-func-to-llvm lowers
+    that to a function returning a struct of one memref descriptor per
+    result."""
     for m in FUNC_FUNC_RE.finditer(text):
         name = m.group("name")
         if expected_name is not None and name != expected_name:
@@ -241,23 +266,27 @@ def parse_mlir_func_signature(text, expected_name=None):
             parts = arg.split(":", 1)
             if len(parts) != 2:
                 raise ValueError(f"Could not parse mlir arg: {arg!r}")
+            arg_name = parts[0].strip().lstrip("%")
             type_str = parts[1].strip()
             dims, base = parse_mlir_shaped_type(type_str)
-            params.append((dims, MLIR_BASE_TO_LLVM_BASE.get(base, base)))
+            params.append(
+                (dims, MLIR_BASE_TO_LLVM_BASE.get(base, base), arg_name)
+            )
 
-        if not ret_str:
-            return_dims, return_base = [], None
-        else:
-            # Possibly multiple comma-separated return types; we only
-            # support a single tensor/memref return (matches every model
-            # seen so far).
-            ret_parts = split_top_level_generic(ret_str, sep=",")
-            if len(ret_parts) != 1:
-                raise ValueError(f"Multiple return values not supported: {ret_str!r}")
-            return_dims, return_base = parse_mlir_shaped_type(ret_parts[0])
-            return_base = MLIR_BASE_TO_LLVM_BASE.get(return_base, return_base)
+        # MLIR parenthesises a multi-result list and leaves a single result
+        # bare, so strip one balanced outer paren pair to bring both
+        # spellings to the same splitter.
+        if ret_str.startswith("(") and find_balanced(
+            ret_str, 0, "(", ")"
+        ) == len(ret_str) - 1:
+            ret_str = ret_str[1:-1].strip()
 
-        return name, params, return_dims, return_base
+        results = []
+        for ret_part in split_top_level_generic(ret_str, sep=","):
+            dims, base = parse_mlir_shaped_type(ret_part)
+            results.append((dims, MLIR_BASE_TO_LLVM_BASE.get(base, base)))
+
+        return name, params, results
 
     raise ValueError(
         f"No matching func.func found"
@@ -279,21 +308,121 @@ def find_sibling_mlir_shape_source(ll_path, expected_name):
     # then fall back to "_lowered" ones.
     candidates.sort(key=lambda fn: ("_lowered" in fn, fn))
 
+    decl_re = re.compile(
+        r"func\.func\s+(?:public\s+)?@" + re.escape(expected_name) + r"\s*\("
+    )
     for fn in candidates:
         path = os.path.join(dirpath, fn)
         try:
             with open(path) as f:
                 text = f.read()
-            name, raw_params, ret_dims, ret_base = parse_mlir_func_signature(
+        except OSError:
+            continue
+        try:
+            name, raw_params, results = parse_mlir_func_signature(
                 text, expected_name=expected_name
             )
-        except Exception:
+        except Exception as e:
+            # A .mlir file that simply doesn't declare this function is not
+            # interesting -- keep looking. One that DOES declare it but whose
+            # signature we cannot parse is a gap in this script, and silently
+            # dropping to the cross-pipeline fallback turns it into a
+            # confusing rank mismatch much further downstream. That is exactly
+            # how 33_VanillaRNN's multi-result signature presented: as
+            # "param rank mismatch (mlir group rank 1 vs shape source rank 2)"
+            # against an unrelated pipeline's argument order.
+            if decl_re.search(text):
+                print(
+                    f"    WARNING: {path} declares @{expected_name} but its "
+                    f"signature could not be parsed: {e}"
+                )
             continue
-        params = [Param(dims, base) for dims, base in raw_params]
-        sig = Signature(name, params, ret_dims, ret_base, style="mlir_source")
+        params = [
+            Param(dims, base, arg_name=arg_name)
+            for dims, base, arg_name in raw_params
+        ]
+        sig = Signature(name, params, results, style="mlir_source")
         sig.source_file = path
+        sig.name_source, sig.unsupported = attach_canonical_names(params, path)
         return sig
     return None
+
+
+def attach_canonical_names(params, mlir_path):
+    """Fill in `param.canonical` for a .mlir-sourced signature.
+
+    Two spellings have to be handled:
+
+      * the mim frontend's .mlir keeps the traced attribute path as the
+        argument name, so demangling it is enough;
+      * torch-mlir names everything %arg0, %arg1, ... and carries the real
+        names in the `.params.txt` manifest that export_mlir.py wrote and
+        import_torch_mlir.sh copied in beside the graph.
+
+    Returns (name_source, unsupported_reason). `name_source` is a short
+    string describing where the names came from, for the generated driver's
+    header comment. `unsupported_reason` is non-None when the artifact
+    describes something this harness cannot bind at all -- and the caller
+    must then REFUSE, not fall back to positional binding: a positional
+    guess is exactly how the wrong weights got read in the first place.
+    """
+    for p in params:
+        if param_manifest.is_mim_forward_arg(p.arg_name):
+            p.role = "input"
+    demangled = sum(1 for p in params if p.canonical)
+    if demangled:
+        return f"argument names in {os.path.basename(mlir_path)}", None
+
+    ptxt = param_manifest.find_params_txt(mlir_path)
+    if ptxt is None:
+        return None, None
+    try:
+        args = param_manifest.parse_params_txt(ptxt)
+    except Exception as e:
+        print(f"    WARNING: could not parse {ptxt}: {e}")
+        return None, None
+    n_inputs = sum(1 for a in args if a is None)
+    if n_inputs > 1:
+        # The whole harness assumes one input tensor: gen_data.py writes a
+        # single <Name>_input.bin and every driver passes a single `x`.
+        # 33_VanillaRNN's forward() was (x, initial_hidden), so torch-mlir
+        # declared two -- and the mim frontend exposed a third anonymous
+        # tensor besides. Nothing here can bind that correctly, and guessing
+        # is how it produced a driver that read one input out of weights.bin.
+        # That model has been removed, but the check stays: it is what makes
+        # the next multi-input model an error instead of wrong numbers.
+        return None, (
+            f"{os.path.basename(ptxt)} declares {n_inputs} model inputs, but "
+            f"the harness supports exactly one (<Name>_input.bin). This model "
+            f"needs multi-input support in gen_data.py and the driver "
+            f"templates"
+        )
+    if len(args) != len(params):
+        print(
+            f"    WARNING: {os.path.basename(ptxt)} describes {len(args)} "
+            f"arguments but {os.path.basename(mlir_path)} declares "
+            f"{len(params)} -- ignoring the manifest"
+        )
+        return None, None
+    for p, a in zip(params, args):
+        if a is None:
+            # export_mlir.py writes '<model input N>' for these. They come
+            # from input.bin, not the blob, and this is the authoritative
+            # statement of which argument that is.
+            p.role = "input"
+            continue
+        n = 1
+        for d in a["dims"]:
+            n *= d
+        if n != total_elems(p.dims):
+            print(
+                f"    WARNING: {os.path.basename(ptxt)} says arg for "
+                f"'{a['name']}' holds {n} elements but the graph declares "
+                f"{total_elems(p.dims)} -- ignoring the manifest"
+            )
+            return None, None
+        p.canonical = a["name"]
+    return os.path.basename(ptxt), None
 
 
 # ---------------------------------------------------------------------------
@@ -302,25 +431,64 @@ def find_sibling_mlir_shape_source(ll_path, expected_name):
 
 
 class Param:
-    __slots__ = ("dims", "base", "role", "cname")
+    __slots__ = (
+        "dims",
+        "base",
+        "role",
+        "cname",
+        "arg_name",
+        "canonical",
+        "byte_offset",
+    )
 
-    def __init__(self, dims, base):
+    def __init__(self, dims, base, arg_name=None):
         self.dims = dims
         self.base = base
         self.role = None  # 'input' | 'weight' | 'bias'
         self.cname = None  # e.g. 'x', 'w3', 'b3'
+        # The argument's name in the source artifact, and the canonical torch
+        # parameter name it demangles to. `canonical` is the join key against
+        # <Name>_params.json; see param_manifest.py.
+        self.arg_name = arg_name
+        self.canonical = param_manifest.demangle_mim_name(arg_name)
+        # Byte offset of this parameter inside weights.bin, from the
+        # manifest. None means "not resolved by name" -- the driver then has
+        # to read sequentially and hope, which is what this whole mechanism
+        # exists to avoid.
+        self.byte_offset = None
 
 
 class Signature:
-    def __init__(self, name, params, return_dims, return_base, style, mlir_groups=None):
+    def __init__(self, name, params, results, style, mlir_groups=None):
         self.name = name
+        # Set on .mlir-sourced signatures: where the argument names that
+        # `param.canonical` was derived from came from (the .mlir's own
+        # argument names, or a sibling .params.txt).
+        self.name_source = None
+        # Non-None when the artifact describes something this harness cannot
+        # bind at all (e.g. more than one model input). A refusal, never a
+        # reason to guess positionally.
+        self.unsupported = None
         self.params = params  # list[Param], in declaration order
-        self.return_dims = return_dims
-        self.return_base = return_base
+        self.results = results  # list[(dims, base)], one per returned value
         self.style = style  # 'raw_flat' | 'raw_struct' | 'mlir_memref' | 'unknown'
         self.mlir_groups = (
             mlir_groups  # list of (start, end, rank) for mlir_memref style
         )
+
+    # Every model in the tree returns exactly one value (33_VanillaRNN, whose
+    # torch-mlir variant returned two, has been removed), so the
+    # single-result view stays the convenient one: it is what assign_roles'
+    # batch heuristic and the mim driver template both want. The
+    # multi-result paths below are kept -- they are the only thing standing
+    # between a two-output model and a driver that silently writes one.
+    @property
+    def return_dims(self):
+        return self.results[0][0] if self.results else []
+
+    @property
+    def return_base(self):
+        return self.results[0][1] if self.results else None
 
 
 def extract_define(text, filename_hint=None):
@@ -352,6 +520,39 @@ def parse_struct_fields(struct_type_str):
     return split_top_level(inner, sep=",")
 
 
+def parse_memref_descriptor_rank(desc_str, filename_hint=None):
+    """Rank of one convert-func-to-llvm memref descriptor, which looks like
+    `{ ptr, ptr, i64, [R x i64], [R x i64] }` (sizes then strides)."""
+    sizes = re.findall(r"\[(\d+)\s*x\s*i64\]", desc_str)
+    if not sizes:
+        return 0  # rank-0 memref: '{ ptr, ptr, i64 }'
+    if len(sizes) != 2 or sizes[0] != sizes[1]:
+        raise ValueError(
+            f"Expected one sizes[] and one strides[] array of equal rank in "
+            f"memref descriptor {desc_str!r} in {filename_hint}"
+        )
+    return int(sizes[0])
+
+
+def parse_mlir_memref_return_ranks(ret_str, filename_hint=None):
+    """Ranks of the memref descriptors in a convert-func-to-llvm return type.
+
+    A single result comes back as a bare descriptor; several results come back
+    as a struct OF descriptors, `{ {...}, {...} }`. This used to grab the
+    first `[R x i64]` it could find anywhere in the type, which reads a
+    2-result function as a single rank-R one -- silently, and that is how
+    33_VanillaRNN's second output went unnoticed.
+    """
+    s = ret_str.strip()
+    if not s.startswith("{"):
+        raise ValueError(f"Could not parse mlir return type: {ret_str!r}")
+    inner = s[1 : find_balanced(s, 0, "{", "}")]
+    fields = split_top_level_generic(inner, sep=",")
+    if fields and all(f.startswith("{") for f in fields):
+        return [parse_memref_descriptor_rank(f, filename_hint) for f in fields]
+    return [parse_memref_descriptor_rank(s, filename_hint)]
+
+
 def parse_signature(text, filename_hint=None):
     name, ret_str, args_str = extract_define(text, filename_hint)
     raw_params = split_top_level(args_str)
@@ -360,22 +561,33 @@ def parse_signature(text, filename_hint=None):
     arg_type_strs = [strip_name_suffix(p) for p in raw_params]
     style = classify_arg_types(arg_type_strs)
 
-    return_dims, return_base = [], None
+    results = []
     mlir_groups = None
     params = []
 
     if style == "raw_flat":
-        for t in arg_type_strs:
+        for t, raw in zip(arg_type_strs, raw_params):
             dims, base = parse_pointee_array(t)
-            params.append(Param(dims, base))
-        return_dims, return_base = parse_pointee_array(ret_str)
+            p = Param(dims, base, arg_name=param_ssa_name(raw))
+            # An argument mim named after a forward() parameter rather than
+            # after module state is the model input. Saying so here means
+            # assign_roles never has to guess -- and never has to guess
+            # differently from gen_data.py, which is what put 33_VanillaRNN's
+            # recurrent state in input.bin and its input in weights.bin.
+            if param_manifest.is_mim_forward_arg(p.arg_name):
+                p.role = "input"
+            params.append(p)
+        results = [parse_pointee_array(ret_str)]
 
     elif style == "raw_struct":
+        # A struct-of-pointers argument carries no per-field names, so these
+        # params cannot be identified by name and have to fall back to
+        # positional binding against the manifest.
         fields = parse_struct_fields(arg_type_strs[0])
         for f in fields:
             dims, base = parse_pointee_array(f)
             params.append(Param(dims, base))
-        return_dims, return_base = parse_pointee_array(ret_str)
+        results = [parse_pointee_array(ret_str)]
 
     elif style == "mlir_memref":
         types = arg_type_strs  # 'ptr' or 'iN', one per scalarized field
@@ -408,18 +620,18 @@ def parse_signature(text, filename_hint=None):
             i = j
         mlir_groups = groups
 
-        # Return type: '{ ptr, ptr, i64, [R x i64], [R x i64] }'
-        ret_sizes = re.findall(r"\[(\d+)\s*x\s*i64\]", ret_str)
-        if not ret_sizes:
-            raise ValueError(f"Could not parse mlir return type: {ret_str!r}")
-        ret_rank = int(ret_sizes[0])
-        return_dims = [None] * ret_rank
-        return_base = "float"
+        # Return type: one memref descriptor per result -- see
+        # parse_mlir_memref_return_ranks. Dims are not recoverable from the
+        # scalarized .ll; they get filled in from the shape source later.
+        results = [
+            ([None] * rank, "float")
+            for rank in parse_mlir_memref_return_ranks(ret_str, filename_hint)
+        ]
 
     else:
         pass  # unknown -- leave params empty, caller will skip
 
-    return Signature(name, params, return_dims, return_base, style, mlir_groups)
+    return Signature(name, params, results, style, mlir_groups)
 
 
 # ---------------------------------------------------------------------------
@@ -470,7 +682,21 @@ def drop_weight_bias_pairs(params, candidates):
 
 
 def assign_roles(params, return_dims):
-    """Mutates params in place: sets .role and .cname."""
+    """Mutates params in place: sets .role and .cname.
+
+    A parameter already marked role=='input' by the signature parser -- mim
+    named it after a forward() argument, or export_mlir.py's .params.txt
+    said so outright -- is taken at its word. The shape heuristic below only
+    runs when nothing in the artifact identifies the input, and it is not
+    reliable on its own: 03_DeepNarrowMLP has a weight with exactly the
+    input's shape, and 33_VanillaRNN passes three identically shaped
+    tensors.
+    """
+    preset = [i for i, p in enumerate(params) if p.role == "input"]
+    if preset:
+        input_idx = max(preset, key=lambda i: total_elems(params[i].dims))
+        return _finish_roles(params, input_idx)
+
     batch = return_dims[0] if return_dims else None
 
     candidates = [
@@ -495,7 +721,10 @@ def assign_roles(params, return_dims):
         candidates,
         key=lambda i: total_elems(params[i].dims) if None not in params[i].dims else -1,
     )
+    return _finish_roles(params, input_idx)
 
+
+def _finish_roles(params, input_idx):
     wc = 0
     bc = 0
     for i, p in enumerate(params):
@@ -557,6 +786,172 @@ def build_shape_sources(root):
 
 
 # ---------------------------------------------------------------------------
+# Binding driver arguments to offsets in weights.bin
+# ---------------------------------------------------------------------------
+
+
+def find_model_root(ll_path):
+    """The model directory a variant directory lives in: `.../08_X/mlir_llvm/
+    Foo.ll` -> `.../08_X`. That is where gen_data.py puts the blob and its
+    manifest."""
+    return os.path.dirname(os.path.dirname(os.path.abspath(ll_path)))
+
+
+def bind_to_manifest(params, manifest, model_name):
+    """Give every non-input parameter its byte offset in weights.bin.
+
+    Returns (mode, message):
+      'by_name'    every slot was matched to a manifest entry by canonical
+                   torch parameter name -- the only mode that is correct
+                   regardless of how this frontend happens to order its
+                   arguments.
+      'by_name+index'
+                   as above, except a few arguments that never had a name
+                   were placed by declaration index, having first confirmed
+                   this signature is the one the manifest was built from.
+      'positional' no names were available, so offsets were assigned in
+                   declaration order. Only accepted when the parameter count
+                   and total element count agree with the manifest exactly,
+                   which makes it plausible but still unverified.
+      'error'      the two disagree in a way that would silently produce
+                   garbage; the caller must not emit a driver.
+    """
+    weights = [p for p in params if p.role != "input"]
+    entries = manifest["entries"]
+    elem_size = manifest.get("weight_elem_size", 4)
+
+    named = [p for p in weights if p.canonical]
+    if named:
+        by_index = {e["mim_index"]: e for e in entries}
+        unnamed = [p for p in weights if not p.canonical]
+        if unnamed:
+            # Some artifacts mix the two: 33_VanillaRNN's mim signature
+            # carries four demangleable parameter paths plus an anonymous
+            # SSA argument (`%_353524`) that never had one. An unnamed slot
+            # can still be placed -- but only by position, and only if this
+            # signature really is the one the manifest was built from. That
+            # holds exactly when every NAMED parameter already sits at the
+            # declaration index the manifest recorded for it, so check that
+            # before trusting position for the rest.
+            in_mim_order = all(
+                p.canonical is None
+                or (
+                    by_index.get(i) is not None
+                    and by_index[i]["name"] == p.canonical
+                )
+                for i, p in enumerate(params)
+            )
+            if not in_mim_order:
+                return (
+                    "error",
+                    f"{len(unnamed)} of {len(weights)} parameters have no "
+                    f"recoverable name ({', '.join(p.cname for p in unnamed[:6])}) "
+                    f"and this artifact's argument order is not the one "
+                    f"{model_name}_params.json was built from, so they cannot "
+                    f"be placed by position either",
+                )
+        by_name = param_manifest.entries_by_name(manifest)
+        unknown = [
+            p.canonical for p in weights if p.canonical and p.canonical not in by_name
+        ]
+        if unknown:
+            return (
+                "error",
+                f"{len(unknown)} parameter(s) are not in "
+                f"{model_name}_params.json ({', '.join(unknown[:6])}) -- the "
+                f"blob and this artifact describe different models; re-run "
+                f"gen_data.py --force after re-importing",
+            )
+        resolved = []
+        for i, p in enumerate(params):
+            if p.role == "input":
+                continue
+            e = by_name[p.canonical] if p.canonical else by_index.get(i)
+            if e is None:
+                return (
+                    "error",
+                    f"parameter {p.cname} (index {i}) has no name and no "
+                    f"manifest slot at that index",
+                )
+            if e["count"] != total_elems(p.dims):
+                return (
+                    "error",
+                    f"'{e['name']}' holds {total_elems(p.dims)} elements "
+                    f"here but {e['count']} in the manifest",
+                )
+            p.canonical = p.canonical or e["name"]
+            p.byte_offset = e["byte_offset"]
+            resolved.append(e["name"])
+        # Two arguments resolving to one slot would read the same weights
+        # twice and leave another slot unread.
+        if len(set(resolved)) != len(resolved):
+            dup = sorted({n for n in resolved if resolved.count(n) > 1})
+            return ("error", f"duplicate parameter name(s): {', '.join(dup)}")
+        if len(resolved) != len(entries):
+            return (
+                "error",
+                f"{len(resolved)} of {len(entries)} slots in "
+                f"{model_name}_params.json were bound -- "
+                f"{len(entries) - len(resolved)} would go unread",
+            )
+        mode = "by_name" if not unnamed else "by_name+index"
+        return (mode, f"matched by name against {model_name}_params.json")
+
+    # No names anywhere (a struct-of-pointers .ll, or a torch-mlir graph
+    # imported without its .params.txt).
+    if len(weights) != len(entries):
+        return (
+            "error",
+            f"no argument names available, and positional binding is not "
+            f"possible either: {len(weights)} weight parameters here vs "
+            f"{len(entries)} slots in {model_name}_params.json",
+        )
+    total_here = sum(total_elems(p.dims) for p in weights)
+    if total_here != manifest["total_floats"]:
+        return (
+            "error",
+            f"no argument names available, and positional binding disagrees "
+            f"on size: {total_here} elements here vs "
+            f"{manifest['total_floats']} in {model_name}_params.json",
+        )
+    offset = 0
+    for p in weights:
+        p.byte_offset = offset * elem_size
+        offset += total_elems(p.dims)
+    return (
+        "positional",
+        f"NO argument names available -- offsets assigned in declaration "
+        f"order. Counts and total size agree with {model_name}_params.json, "
+        f"but the ORDER is unverified",
+    )
+
+
+def validate_input_against_manifest(params, manifest, model_name):
+    """Check the parameter we think is the model input against the one
+    gen_data.py actually wrote input.bin from.
+
+    All three scripts have to agree on this, and they used to each re-derive
+    it from shapes: 03_DeepNarrowMLP has a weight with exactly the input's
+    shape, and 33_VanillaRNN passes three identically shaped tensors. Now
+    gen_data.py records its decision and this just verifies it.
+    """
+    inp = [p for p in params if p.role == "input"]
+    if len(inp) != 1:
+        return f"expected exactly one input parameter, found {len(inp)}"
+    want = manifest.get("input", {}).get("count")
+    if want is None:
+        return None
+    got = total_elems(inp[0].dims)
+    if got != want:
+        return (
+            f"the parameter picked as the input holds {got} elements but "
+            f"{model_name}_input.bin holds {want} -- the input was "
+            f"misidentified for this artifact"
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
 # C code generation -- "mim" style (raw_flat / raw_struct)
 # ---------------------------------------------------------------------------
 
@@ -569,7 +964,38 @@ def row_major_strides(dims):
 
 
 def c_read_floats_helper():
-    return """static float *read_floats(FILE *f, size_t n, const char *what) {
+    """Weights are read at an explicit byte offset, never sequentially.
+
+    The offsets come from <Name>_params.json, which names every slot in
+    weights.bin. Sequential reads only work if this pipeline's argument
+    order happens to equal the order gen_data.py wrote -- and it does not:
+    the mim frontend takes BatchNorm's running_mean/running_var as arguments
+    and puts the input third, torch-mlir puts the input first. Reading in
+    declaration order made the torch-mlir drivers read `bn1.running_mean`
+    into `bn1.weight` and slide 128 floats out of phase from the first
+    BatchNorm onward. Seeking by name cannot drift.
+    """
+    return """static float *read_floats_at(FILE *f, long byte_offset, size_t n,
+                             const char *what) {
+  float *p = (float *)malloc(n * sizeof(float));
+  if (!p) {
+    fprintf(stderr, "out of memory reading %s (%zu floats)\\n", what, n);
+    exit(1);
+  }
+  if (fseek(f, byte_offset, SEEK_SET) != 0) {
+    fprintf(stderr, "seek to offset %ld for %s failed\\n", byte_offset, what);
+    exit(1);
+  }
+  size_t got = fread(p, sizeof(float), n, f);
+  if (got != n) {
+    fprintf(stderr, "short read on %s at offset %ld: wanted %zu floats, got "
+                    "%zu\\n", what, byte_offset, n, got);
+    exit(1);
+  }
+  return p;
+}
+
+static float *read_floats(FILE *f, size_t n, const char *what) {
   float *p = (float *)malloc(n * sizeof(float));
   if (!p) {
     fprintf(stderr, "out of memory reading %s (%zu floats)\\n", what, n);
@@ -749,12 +1175,19 @@ def generate_mim_driver(sig, input_idx, variant_name):
         if p.role == "input":
             continue
         read_calls.append(
-            f'  float *{p.cname} = read_floats(wf, {p.cname}_count, "{p.cname}");'
+            f'  float *{p.cname} = read_floats_at(wf, {p.byte_offset}, '
+            f'{p.cname}_count, "{p.cname}");'
         )
     read_weights_block = "\n".join(read_calls)
 
     shape_comment_lines = "\n".join(
-        f" * {p.cname}: shape {p.dims} ({p.role})" for p in params
+        f" * {p.cname}: shape {p.dims} ({p.role})"
+        + (
+            ""
+            if p.role == "input"
+            else f" <- {p.canonical or '?'} @ byte {p.byte_offset}"
+        )
+        for p in params
     )
 
     src = f"""#include <signal.h>
@@ -976,20 +1409,103 @@ def generate_mlir_driver(sig, shape_sig, input_idx, variant_name, source_desc=No
         p.dims = sp.dims
         p.role = sp.role
         p.cname = sp.cname
+        p.arg_name = sp.arg_name
+        p.canonical = sp.canonical
+        p.byte_offset = sp.byte_offset
 
-    out_dims = shape_sig.return_dims
-    out_rank = len(out_dims)
-    if sig.return_dims and len(sig.return_dims) != out_rank:
+    if not shape_sig.results:
+        raise ValueError(f"{name}: shape source has no return value")
+    if sig.results and len(sig.results) != len(shape_sig.results):
         raise ValueError(
-            f"{name}: return rank mismatch (mlir {len(sig.return_dims)} vs "
-            f"shape source {out_rank})"
+            f"{name}: return count mismatch (mlir returns {len(sig.results)} "
+            f"value(s) vs shape source {len(shape_sig.results)})"
         )
-    out_count = total_elems(out_dims)
+    for i, ((ll_dims, _), (src_dims, _)) in enumerate(
+        zip(sig.results, shape_sig.results)
+    ):
+        if len(ll_dims) != len(src_dims):
+            raise ValueError(
+                f"{name}: return {i} rank mismatch (mlir {len(ll_dims)} vs "
+                f"shape source {len(src_dims)})"
+            )
+    out_dims_list = [dims for dims, _ in shape_sig.results]
+    out_ranks = [len(d) for d in out_dims_list]
+    out_rank = out_ranks[0]
+    nres = len(out_ranks)
+    multi_out = nres > 1
+
+    # convert-func-to-llvm returns one memref descriptor per result. A single
+    # result comes back as that descriptor directly -- so single-result models
+    # keep using the bare memrefRd they always did, and their generated
+    # drivers are unchanged -- while several results come back packed into a
+    # struct, in declaration order, which needs its own C type.
+    if multi_out:
+        result_t = f"{name}_result"
+        result_typedef = (
+            "\ntypedef struct {\n"
+            + "".join(f"  memref{r}d r{i};\n" for i, r in enumerate(out_ranks))
+            + f"}} {result_t};"
+        )
+    else:
+        result_t = f"memref{out_rank}d"
+        result_typedef = ""
+
+    def free_results(var, indent):
+        """Each result owns its own allocation, so every one has to be freed."""
+        if multi_out:
+            return "\n".join(f"{indent}free({var}.r{i}.alloc);" for i in range(nres))
+        return f"{indent}free({var}.alloc);"
+
+    free_out_4 = free_results("out", " " * 4)
+    free_out_6 = free_results("out", " " * 6)
+    free_out_8 = free_results("out", " " * 8)
+    free_cur_10 = free_results("cur", " " * 10)
+
+    # All results are written to the single <output> file back-to-back in
+    # THIS function's own declaration order, which is the only order
+    # recoverable from this .ll.
+    #
+    # Do NOT assume that makes the file comparable with another pipeline's
+    # output for the same model. 33_VanillaRNN (since removed from this tree)
+    # was the counter-example: the mim frontend flattened its two outputs as
+    # [out, new_hidden] while torch-mlir declared them (hidden, out), so the
+    # two pipelines' buffers disagreed in both order and content no matter
+    # what this driver did. Reconciling that is a model-source problem, not a
+    # driver one.
+    if multi_out:
+        per_result = "\n".join(
+            f"  size_t n{i} = 1;\n"
+            f"  for (int i = 0; i < {r}; i++)\n"
+            f"    n{i} *= (size_t)out.r{i}.sizes[i];\n"
+            f"  wrote += fwrite(out.r{i}.aligned, sizeof(float), n{i}, of);\n"
+            f"  n_out += n{i};"
+            for i, r in enumerate(out_ranks)
+        )
+        write_body = "  size_t n_out = 0, wrote = 0;\n" + per_result
+        totals = " + ".join(str(total_elems(d)) for d in out_dims_list)
+        out_comment = (
+            "\n".join(
+                f" * output {i}: shape {d}" for i, d in enumerate(out_dims_list)
+            )
+            + f"\n * All {nres} results are written to <output> back-to-back in this"
+            + f"\n * function's declaration order ({totals} ="
+            + f" {sum(total_elems(d) for d in out_dims_list)} floats). That order"
+            + f"\n * comes from this .ll alone -- do not assume another pipeline's"
+            + f"\n * output file for this model uses the same layout."
+        )
+    else:
+        write_body = (
+            "  size_t n_out = 1;\n"
+            f"  for (int i = 0; i < {out_rank}; i++)\n"
+            "    n_out *= (size_t)out.sizes[i];\n"
+            "  size_t wrote = fwrite(out.aligned, sizeof(float), n_out, of);"
+        )
+        out_comment = f" * output: shape {out_dims_list[0]}"
 
     input_p = next(p for p in sig.params if p.role == "input")
 
-    # Distinct ranks needing a memrefRd typedef (params + output).
-    ranks_needed = sorted({len(p.dims) for p in sig.params} | {out_rank})
+    # Distinct ranks needing a memrefRd typedef (params + results).
+    ranks_needed = sorted({len(p.dims) for p in sig.params} | set(out_ranks))
     typedefs = "\n".join(
         f"typedef struct {{\n"
         f"  float *alloc, *aligned;\n"
@@ -1029,13 +1545,20 @@ def generate_mlir_driver(sig, shape_sig, input_idx, variant_name, source_desc=No
     )
 
     read_calls = "\n".join(
-        f'  float *{p.cname} = read_floats(wf, {p.cname}_count, "{p.cname}");'
+        f'  float *{p.cname} = read_floats_at(wf, {p.byte_offset}, '
+        f'{p.cname}_count, "{p.cname}");'
         for p in sig.params
         if p.role != "input"
     )
 
     shape_comment_lines = "\n".join(
-        f" * {p.cname}: shape {p.dims} ({p.role})" for p in sig.params
+        f" * {p.cname}: shape {p.dims} ({p.role})"
+        + (
+            ""
+            if p.role == "input"
+            else f" <- {p.canonical or '?'} @ byte {p.byte_offset}"
+        )
+        for p in sig.params
     )
 
     src = f"""#include <signal.h>
@@ -1052,10 +1575,13 @@ def generate_mlir_driver(sig, shape_sig, input_idx, variant_name, source_desc=No
  * by gen_drivers.py -- do not hand-edit.
  *
  * Shapes are not recoverable from this .ll's own (fully scalarized)
- * signature, so they were borrowed from {source_desc or shape_sig.name},
- * matched positionally:
+ * signature, so they were borrowed from {source_desc or shape_sig.name}
+ * -- which is a file for THIS pipeline, so its argument order matches
+ * one-for-one what convert-func-to-llvm scalarized. Each weight's location
+ * in weights.bin is its byte offset from {shape_sig.name}_params.json,
+ * looked up by canonical torch parameter name:
 {shape_comment_lines}
- * output: shape {out_dims}
+{out_comment}
  *
  * Usage: {name}_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
  * run_id/json_report default to a generated UTC timestamp / a filename
@@ -1064,9 +1590,9 @@ def generate_mlir_driver(sig, shape_sig, input_idx, variant_name, source_desc=No
  * timing reports.
  */
 
-{typedefs}
+{typedefs}{result_typedef}
 
-extern memref{out_rank}d {name}(
+extern {result_t} {name}(
     {extern_args});
 
 {count_decls}
@@ -1074,7 +1600,7 @@ extern memref{out_rank}d {name}(
 {c_read_floats_helper()}
 {c_timing_report_helper()}
 {c_fork_helpers()}
-static void write_result(memref{out_rank}d out, const char *output_path) {{
+static void write_result({result_t} out, const char *output_path) {{
   printf("writing output to %s...\\n", output_path);
   fflush(stdout);
   FILE *of = fopen(output_path, "wb");
@@ -1083,10 +1609,7 @@ static void write_result(memref{out_rank}d out, const char *output_path) {{
     perror(NULL);
     exit(1);
   }}
-  size_t n_out = 1;
-  for (int i = 0; i < {out_rank}; i++)
-    n_out *= (size_t)out.sizes[i];
-  size_t wrote = fwrite(out.aligned, sizeof(float), n_out, of);
+{write_body}
   fclose(of);
   if (wrote != n_out) {{
     fprintf(stderr, "short write on output: wanted %zu floats, wrote %zu\\n",
@@ -1154,23 +1677,23 @@ int main(int argc, char **argv) {{
     pid_t p = fork();
     if (p < 0) {{ perror("fork"); return 1; }}
     if (p == 0) {{
-      memref{out_rank}d out = {name}(
+      {result_t} out = {name}(
           {call_args});
-      free(out.alloc);
+{free_out_6}
       _exit(0);
     }}
     await_child(p, "warm-up");
   }} else {{
-    memref{out_rank}d out = {name}(
+    {result_t} out = {name}(
         {call_args});
-    free(out.alloc);
+{free_out_4}
   }}
   printf("warm-up done.\\n");
   fflush(stdout);
   printf("start timed reps...\\n");
   fflush(stdout);
   int keep_out = 0;
-  memref{out_rank}d out;
+  {result_t} out;
   for (int i = 0; i < reps; i++) {{
     const int is_last = (i == reps - 1);
     if (use_fork) {{
@@ -1180,7 +1703,7 @@ int main(int argc, char **argv) {{
       if (p == 0) {{
         struct timespec t0, t1;
         clock_gettime(CLOCK_MONOTONIC, &t0);
-        memref{out_rank}d cur = {name}(
+        {result_t} cur = {name}(
             {call_args});
         clock_gettime(CLOCK_MONOTONIC, &t1);
         times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
@@ -1189,7 +1712,7 @@ int main(int argc, char **argv) {{
            buffer never has to cross the process boundary. */
         if (is_last) {{
           write_result(cur, output_path);
-          free(cur.alloc);
+{free_cur_10}
         }}
         _exit(0);
       }}
@@ -1197,13 +1720,13 @@ int main(int argc, char **argv) {{
     }} else {{
       struct timespec t0, t1;
       clock_gettime(CLOCK_MONOTONIC, &t0);
-      memref{out_rank}d cur = {name}(
+      {result_t} cur = {name}(
           {call_args});
       clock_gettime(CLOCK_MONOTONIC, &t1);
       times[i] = (double)(t1.tv_sec - t0.tv_sec) * 1e9 +
                  (double)(t1.tv_nsec - t0.tv_nsec);
       if (keep_out)
-        free(out.alloc);
+{free_out_8}
       out = cur;
       keep_out = 1;
     }}
@@ -1213,7 +1736,7 @@ int main(int argc, char **argv) {{
 
   if (!use_fork) {{
     write_result(out, output_path);
-    free(out.alloc);
+{free_out_4}
   }}
 
   qsort(times, reps, sizeof(double), cmp_double);
@@ -1243,6 +1766,57 @@ int main(int argc, char **argv) {{
 # ---------------------------------------------------------------------------
 
 
+def resolve_blob_layout(ll_path, params, model_name, name_source=None):
+    """Load this model's weight manifest and bind `params` to it.
+
+    Returns (ok, note). `ok` False means no driver should be written: the
+    artifact and the blob disagree about the model, and a driver built on
+    that would read plausible-looking garbage.
+    """
+    model_root = find_model_root(ll_path)
+    try:
+        manifest = param_manifest.find_manifest(model_root, model_name)
+    except Exception as e:
+        print(f"    ERROR: {e}")
+        return False, None
+    if manifest is None:
+        print(
+            f"    ERROR: no {model_name}_params.json in {model_root} -- run "
+            f"gen_data.py first (it writes the manifest alongside the blob)"
+        )
+        return False, None
+
+    problem = validate_input_against_manifest(params, manifest, model_name)
+    if problem:
+        print(f"    ERROR: {problem}")
+        return False, None
+
+    mode, message = bind_to_manifest(params, manifest, model_name)
+    if mode == "error":
+        print(f"    ERROR: {message}")
+        return False, None
+    if mode == "positional":
+        print(f"    WARNING: {message}")
+    if name_source:
+        message = f"{message} (names from {name_source})"
+    return True, message
+
+
+def warn_stale_driver(out_path):
+    """Refusing to regenerate a driver leaves whatever is already on disk,
+    and compile_all.sh will happily build that. A driver generated against a
+    different blob layout is precisely the silent-garbage failure this
+    mechanism exists to prevent, so say so unmistakably."""
+    if os.path.exists(out_path):
+        print(
+            f"    *** STALE DRIVER LEFT IN PLACE: {out_path}\n"
+            f"    *** It was generated against a different weights.bin layout "
+            f"and will read the wrong weights.\n"
+            f"    *** compile_all.sh will still build it -- delete it, or fix "
+            f"the cause above and re-run with --force."
+        )
+
+
 def process_file(ll_path, shape_sources, dry_run=False, force=False):
     with open(ll_path) as f:
         text = f.read()
@@ -1263,8 +1837,18 @@ def process_file(ll_path, shape_sources, dry_run=False, force=False):
         style_tag = "mim"
         out_path = os.path.join(dirpath, f"{sig.name}_driver_{style_tag}.c")
         print(f"[{sig.name}] {ll_path}  (style={sig.style})")
+        ok, note = resolve_blob_layout(ll_path, sig.params, sig.name)
+        if not ok:
+            warn_stale_driver(out_path)
+            print(f"[SKIP] {ll_path}: cannot bind weights.bin")
+            return
+        print(f"    weights: {note}")
         for p in sig.params:
-            print(f"    {p.cname:>5} [{p.role:>6}] : {p.dims}")
+            loc = "input.bin" if p.role == "input" else f"@{p.byte_offset}"
+            print(
+                f"    {p.cname:>5} [{p.role:>6}] : {str(p.dims):<22} "
+                f"{loc:>12}  {p.canonical or ''}"
+            )
         if dry_run:
             print(f"    -> (dry-run) would write {out_path}")
             return
@@ -1311,9 +1895,31 @@ def process_file(ll_path, shape_sources, dry_run=False, force=False):
                 f"falling back to a shape source from a different pipeline. "
                 f"Verify the argument order actually matches before trusting this driver."
             )
+        if getattr(shape_sig, "unsupported", None):
+            print(f"    ERROR: {shape_sig.unsupported}")
+            warn_stale_driver(out_path)
+            print(f"[SKIP] {ll_path}: unsupported model shape")
+            return
+        # Bind the shape source's params -- generate_mlir_driver copies dims,
+        # names and offsets from them onto this .ll's scalarized groups.
+        ok, note = resolve_blob_layout(
+            ll_path,
+            shape_sig.params,
+            sig.name,
+            name_source=getattr(shape_sig, "name_source", None),
+        )
+        if not ok:
+            warn_stale_driver(out_path)
+            print(f"[SKIP] {ll_path}: cannot bind weights.bin")
+            return
+        print(f"    weights: {note}")
+        for sp in shape_sig.params:
+            loc = "input.bin" if sp.role == "input" else f"@{sp.byte_offset}"
+            print(
+                f"    {sp.cname:>5} [{sp.role:>6}] : {str(sp.dims):<22} "
+                f"{loc:>12}  {sp.canonical or ''}"
+            )
         if dry_run:
-            for p, sp in zip(sig.params, shape_sig.params):
-                print(f"    {sp.cname:>5} [{sp.role:>6}] : {sp.dims}")
             print(f"    -> (dry-run) would write {out_path}")
             return
         if not force and os.path.exists(out_path):

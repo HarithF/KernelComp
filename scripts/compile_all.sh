@@ -151,6 +151,16 @@ LLC_ARGS=("-${OPT_LEVEL}")
 CLANG_ARGS=("-${OPT_LEVEL}")
 
 # ---------------------------------------------------------------------------
+# -no-pie IS REQUIRED, and it is a link-time-only change.
+#
+# mlir-translate emits no "PIC Level" module flag, so llc defaults to the
+# `static` relocation model and is free to address a global with an absolute
+# 32-bit displacement. It takes that freedom whenever a vectorised loop reads
+# a constant global through an index register
+# ---------------------------------------------------------------------------
+CLANG_ARGS+=("-no-pie")
+
+# ---------------------------------------------------------------------------
 # opt needs an explicit -mtriple, and -mcpu is USELESS WITHOUT IT.
 #
 # mlir-translate emits no `target triple` line, so opt cannot build a
@@ -174,9 +184,9 @@ CLANG_ARGS=("-${OPT_LEVEL}")
 # The triple is passed even in -portable mode: without one the vectorizer is
 # blind regardless of CPU. Only -mcpu is conditional.
 # ---------------------------------------------------------------------------
-HOST_TRIPLE="$(llvm-config --host-target 2>/dev/null \
-  || clang -dumpmachine 2>/dev/null \
-  || echo x86_64-unknown-linux-gnu)"
+HOST_TRIPLE="$(llvm-config --host-target 2>/dev/null ||
+  clang -dumpmachine 2>/dev/null ||
+  echo x86_64-unknown-linux-gnu)"
 OPT_ARGS+=("-mtriple=${HOST_TRIPLE}")
 
 if [[ "$NATIVE" == true ]]; then

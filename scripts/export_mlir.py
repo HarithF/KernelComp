@@ -22,6 +22,16 @@ does NOT freeze/inline them -- they show up as block arguments of the
 emitted func.func, i.e. the compiled function stays parametric over the
 weights.
 
+That applies to BUFFERS as well as parameters: module state is promoted to
+explicit arguments unconditionally. Left unpromoted, a BatchNorm's
+running_mean/running_var get frozen into the graph as `arith.constant 0.0` /
+`dense<1>` -- the freshly constructed module's defaults -- while the mim
+frontend takes the same buffers as runtime arguments read from
+`weights.bin`. The two frontends then compile different functions, which is
+what made every BatchNorm model in kernel_comp disagree. Integral buffers
+(`num_batches_tracked`) stay frozen: nothing reads them in eval mode and a
+float32 blob cannot feed them. See scripts/param_manifest.py.
+
 Usage:
     python export_mlir.py --repo-dir ./models --out-dir ./mlir_out
     python export_mlir.py --repo-dir . --out-dir ./out --pattern "*_VGG*.py" --verbose
@@ -86,7 +96,9 @@ def build_decomposition_table() -> dict:
     table = dict(get_decomposition_table())
 
     extra_ops = [
-        op for op in (getattr(torch.ops.aten, n, None) for n in RNN_OP_NAMES) if op is not None
+        op
+        for op in (getattr(torch.ops.aten, n, None) for n in RNN_OP_NAMES)
+        if op is not None
     ]
     if extra_ops:
         try:
@@ -378,20 +390,6 @@ def outputs_close(a: Any, b: Any, atol=1e-4, rtol=1e-4) -> bool:
     return a == b
 
 
-# Substrings that mean "torch.export tripped over mutated module state" -- the
-# one failure class that retrying with buffers promoted actually fixes.
-MUTATED_STATE_HINTS = (
-    "Pls register it as buffer",
-    "is mutated in the forward method",
-    "must be registered as buffers",
-    "were assigned during export",
-)
-
-
-def looks_like_mutated_state(message: str) -> bool:
-    return any(hint in message for hint in MUTATED_STATE_HINTS)
-
-
 # --------------------------------------------------------------------------
 # Core export logic for a single file
 # --------------------------------------------------------------------------
@@ -425,12 +423,27 @@ def attempt_export(
 
         if promote_state:
             promoted = promote_tensor_attrs_to_buffers(model)
-            buffer_names = [name for name, _ in model.named_buffers()]
+            # Only FLOATING-POINT buffers become arguments. `weights.bin` is
+            # a float32 blob, so an integral buffer could not be fed from it
+            # anyway
+            buffer_names = [
+                name for name, buf in model.named_buffers() if buf.is_floating_point()
+            ]
+            skipped = [
+                name
+                for name, buf in model.named_buffers()
+                if not buf.is_floating_point()
+            ]
             state_names += buffer_names
             notes.append(
                 "promoted module state to explicit args: "
                 + (", ".join(promoted) if promoted else "(none)")
                 + f"; buffers as args: {len(buffer_names)}"
+                + (
+                    f"; non-float buffers left as constants: {len(skipped)}"
+                    if skipped
+                    else ""
+                )
             )
 
         state_dict = dict(model.named_parameters())
@@ -488,7 +501,9 @@ def attempt_export(
             msg = "functional wrapper output mismatch vs. original model"
             if strict_verify:
                 return None, [], msg, notes
-            notes.append(f"WARNING: {msg} (exported anyway; use --strict-verify to fail)")
+            notes.append(
+                f"WARNING: {msg} (exported anyway; use --strict-verify to fail)"
+            )
 
     # 3. Export to Torch-MLIR / Linalg-on-Tensors (parametric over weights)
     func_name = sanitize_func_name(path.stem)
@@ -546,19 +561,31 @@ def export_one(
             path, False, "missing get_inputs()/get_init_inputs(), skipping"
         )
 
-    # 2. Export, retrying once with module state promoted to explicit arguments
-    #    if the first attempt died on mutated state. The model is rebuilt from
-    #    scratch for the retry, so a half-mutated module can't leak across.
+    # 2. Export with module state promoted to explicit arguments.
+    #
+    # This is unconditional, and it has to be. With state left unpromoted,
+    # torch.export freezes every buffer into the graph as a constant -- so a
+    # BatchNorm came out as `arith.constant 0.0` / `dense<1>` for its
+    # running_mean/running_var, hard-coding the *freshly constructed* module's
+    # defaults.
+    # The fallback to an unpromoted export is kept for models that only
+    # export at all that way
     mlir_text, manifest, error, notes = attempt_export(
-        module, path, seed, verbose, False, skip_verify, strict_verify
+        module, path, seed, verbose, True, skip_verify, strict_verify
     )
-    if mlir_text is None and looks_like_mutated_state(error):
+    if mlir_text is None:
         gc.collect()
-        retry_note = "first attempt hit mutated module state; retried with buffers promoted"
-        mlir_text, manifest, error, notes = attempt_export(
-            module, path, seed, verbose, True, skip_verify, strict_verify
+        retry_note = (
+            "WARNING: export with promoted module state failed "
+            f"({error.splitlines()[0] if error else '?'}); retried WITHOUT "
+            "promotion -- any buffers are frozen into the graph as constants, "
+            "so this graph is not weight-comparable against the mim frontend"
         )
-        notes.insert(0, retry_note)
+        mlir_text, manifest, error, notes = attempt_export(
+            module, path, seed, verbose, False, skip_verify, strict_verify
+        )
+        if mlir_text is not None:
+            notes.insert(0, retry_note)
 
     if mlir_text is None:
         return ExportResult(path, False, error, notes=notes)
