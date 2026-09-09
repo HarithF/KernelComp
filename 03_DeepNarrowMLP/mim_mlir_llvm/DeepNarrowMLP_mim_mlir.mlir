@@ -24,7 +24,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v12.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v12.buf = linalg.fill ins(%v1 : f32) outs(%v12.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v12.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v12.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v0.post.out, %l_self_modules_network_modules_2_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v12.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_13: f32, %in_14: f32, %acc_15: f32):
@@ -45,7 +45,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v23.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v23.buf = linalg.fill ins(%v1 : f32) outs(%v23.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v23.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v23.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v12.post.out, %l_self_modules_network_modules_4_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v23.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_24: f32, %in_25: f32, %acc_26: f32):
@@ -66,7 +66,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v34.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v34.buf = linalg.fill ins(%v1 : f32) outs(%v34.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v34.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v34.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v23.post.out, %l_self_modules_network_modules_6_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v34.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_35: f32, %in_36: f32, %acc_37: f32):
@@ -87,7 +87,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v45.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v45.buf = linalg.fill ins(%v1 : f32) outs(%v45.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v45.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v45.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v34.post.out, %l_self_modules_network_modules_8_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v45.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_46: f32, %in_47: f32, %acc_48: f32):
@@ -108,7 +108,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v56.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v56.buf = linalg.fill ins(%v1 : f32) outs(%v56.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v56.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v56.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v45.post.out, %l_self_modules_network_modules_10_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v56.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_57: f32, %in_58: f32, %acc_59: f32):
@@ -129,7 +129,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v67.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v67.buf = linalg.fill ins(%v1 : f32) outs(%v67.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v67.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v67.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v56.post.out, %l_self_modules_network_modules_12_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v67.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_68: f32, %in_69: f32, %acc_70: f32):
@@ -150,7 +150,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v78.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v78.buf = linalg.fill ins(%v1 : f32) outs(%v78.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v78.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v78.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v67.post.out, %l_self_modules_network_modules_14_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v78.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_79: f32, %in_80: f32, %acc_81: f32):
@@ -171,7 +171,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v89.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v89.buf = linalg.fill ins(%v1 : f32) outs(%v89.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v89.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v89.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v78.post.out, %l_self_modules_network_modules_16_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v89.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_90: f32, %in_91: f32, %acc_92: f32):
@@ -192,7 +192,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v100.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v100.buf = linalg.fill ins(%v1 : f32) outs(%v100.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v100.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v100.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v89.post.out, %l_self_modules_network_modules_18_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v100.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_101: f32, %in_102: f32, %acc_103: f32):
@@ -213,7 +213,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v111.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v111.buf = linalg.fill ins(%v1 : f32) outs(%v111.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v111.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v111.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v100.post.out, %l_self_modules_network_modules_20_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v111.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_112: f32, %in_113: f32, %acc_114: f32):
@@ -234,7 +234,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v122.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v122.buf = linalg.fill ins(%v1 : f32) outs(%v122.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v122.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v122.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v111.post.out, %l_self_modules_network_modules_22_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v122.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_123: f32, %in_124: f32, %acc_125: f32):
@@ -255,7 +255,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v133.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v133.buf = linalg.fill ins(%v1 : f32) outs(%v133.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v133.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v133.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v122.post.out, %l_self_modules_network_modules_24_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v133.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_134: f32, %in_135: f32, %acc_136: f32):
@@ -276,7 +276,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v144.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v144.buf = linalg.fill ins(%v1 : f32) outs(%v144.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v144.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v144.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v133.post.out, %l_self_modules_network_modules_26_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v144.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_145: f32, %in_146: f32, %acc_147: f32):
@@ -297,7 +297,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v155.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v155.buf = linalg.fill ins(%v1 : f32) outs(%v155.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v155.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v155.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v144.post.out, %l_self_modules_network_modules_28_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v155.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_156: f32, %in_157: f32, %acc_158: f32):
@@ -318,7 +318,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v166.empty = tensor.empty() : tensor<512x2x256x4xf32>
     %v166.buf = linalg.fill ins(%v1 : f32) outs(%v166.empty : tensor<512x2x256x4xf32>) -> tensor<512x2x256x4xf32>
-    %v166.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v166.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v155.post.out, %l_self_modules_network_modules_30_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<1024x1024xf32>)
       outs(%v166.buf : tensor<512x2x256x4xf32>) {
         ^bb0(%in_167: f32, %in_168: f32, %acc_169: f32):
@@ -339,7 +339,7 @@ module {
     -> tensor<512x2x256x4xf32>
     %v177.empty = tensor.empty() : tensor<512x2x2048x4xf32>
     %v177.buf = linalg.fill ins(%v1 : f32) outs(%v177.empty : tensor<512x2x2048x4xf32>) -> tensor<512x2x2048x4xf32>
-    %v177.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> ((d4 + (d0 * 2 + d2) * 1024) floordiv 2048, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
+    %v177.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, (d4 + (d0 * 2 + d2) * 1024) floordiv 4 mod 256, d4 mod 4)>, affine_map<(d0, d1, d2, d3, d4) -> (d1 * 4 + d3, d4)>, affine_map<(d0, d1, d2, d3, d4) -> (d0, d2, d1, d3)>], iterator_types = ["parallel", "parallel", "parallel", "parallel", "reduction"]}
       ins(%v166.post.out, %l_self_modules_network_modules_32_parameters_weight_ : tensor<512x2x256x4xf32>, tensor<8192x1024xf32>)
       outs(%v177.buf : tensor<512x2x2048x4xf32>) {
         ^bb0(%in_178: f32, %in_179: f32, %acc_180: f32):
@@ -358,7 +358,7 @@ module {
       }
     -> tensor<512x2x2048x4xf32>
     %input_33.buf = tensor.empty() : tensor<1024x8192xf32>
-    %input_33.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1) -> ((d1 + d0 * 8192) floordiv 16384, d0 mod 2, (d1 + d0 * 8192) floordiv 4 mod 2048, d1 mod 4)>, affine_map<(d0, d1) -> (d0, d1)>], iterator_types = ["parallel", "parallel"]}
+    %input_33.buf.out = linalg.generic {indexing_maps = [affine_map<(d0, d1) -> (d0 floordiv 2, d0 mod 2, (d1 + d0 * 8192) floordiv 4 mod 2048, d1 mod 4)>, affine_map<(d0, d1) -> (d0, d1)>], iterator_types = ["parallel", "parallel"]}
       ins(%v177.post.out : tensor<512x2x2048x4xf32>)
       outs(%input_33.buf : tensor<1024x8192xf32>) {
         ^bb0(%in_187: f32, %acc_188: f32):
