@@ -12,15 +12,18 @@
  * by gen_drivers.py -- do not hand-edit.
  *
  * Shapes are not recoverable from this .ll's own (fully scalarized)
- * signature, so they were borrowed from sibling .mlir (./01_MLP/mim_mlir_llvm/MLP_mim_mlir.mlir),
- * matched positionally:
- * w1: shape [16384, 16384] (weight)
- * b1: shape [16384] (bias)
+ * signature, so they were borrowed from sibling .mlir (./01_MLP/mim_mlir_llvm/MLP_mim_mlir.mlir)
+ * -- which is a file for THIS pipeline, so its argument order matches
+ * one-for-one what convert-func-to-llvm scalarized. Each weight's location
+ * in weights.bin is its byte offset from MLP_params.json,
+ * looked up by canonical torch parameter name:
+ * w1: shape [16384, 16384] (weight) <- network.0.weight @ byte 0
+ * b1: shape [16384] (bias) <- network.0.bias @ byte 1073741824
  * x: shape [128, 16384] (input)
- * w2: shape [16384, 16384] (weight)
- * b2: shape [16384] (bias)
- * w3: shape [8192, 16384] (weight)
- * b3: shape [8192] (bias)
+ * w2: shape [16384, 16384] (weight) <- network.2.weight @ byte 1073807360
+ * b2: shape [16384] (bias) <- network.2.bias @ byte 2147549184
+ * w3: shape [8192, 16384] (weight) <- network.4.weight @ byte 2147614720
+ * b3: shape [8192] (bias) <- network.4.bias @ byte 2684485632
  * output: shape [128, 8192]
  *
  * Usage: MLP_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
@@ -95,6 +98,26 @@ static const size_t w2_count = 268435456;
 static const size_t b2_count = 16384;
 static const size_t w3_count = 134217728;
 static const size_t b3_count = 8192;
+
+static float *read_floats_at(FILE *f, long byte_offset, size_t n,
+                             const char *what) {
+  float *p = (float *)malloc(n * sizeof(float));
+  if (!p) {
+    fprintf(stderr, "out of memory reading %s (%zu floats)\n", what, n);
+    exit(1);
+  }
+  if (fseek(f, byte_offset, SEEK_SET) != 0) {
+    fprintf(stderr, "seek to offset %ld for %s failed\n", byte_offset, what);
+    exit(1);
+  }
+  size_t got = fread(p, sizeof(float), n, f);
+  if (got != n) {
+    fprintf(stderr, "short read on %s at offset %ld: wanted %zu floats, got "
+                    "%zu\n", what, byte_offset, n, got);
+    exit(1);
+  }
+  return p;
+}
 
 static float *read_floats(FILE *f, size_t n, const char *what) {
   float *p = (float *)malloc(n * sizeof(float));
@@ -279,12 +302,12 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  float *w1 = read_floats(wf, w1_count, "w1");
-  float *b1 = read_floats(wf, b1_count, "b1");
-  float *w2 = read_floats(wf, w2_count, "w2");
-  float *b2 = read_floats(wf, b2_count, "b2");
-  float *w3 = read_floats(wf, w3_count, "w3");
-  float *b3 = read_floats(wf, b3_count, "b3");
+  float *w1 = read_floats_at(wf, 0, w1_count, "w1");
+  float *b1 = read_floats_at(wf, 1073741824, b1_count, "b1");
+  float *w2 = read_floats_at(wf, 1073807360, w2_count, "w2");
+  float *b2 = read_floats_at(wf, 2147549184, b2_count, "b2");
+  float *w3 = read_floats_at(wf, 2147614720, w3_count, "w3");
+  float *b3 = read_floats_at(wf, 2684485632, b3_count, "b3");
   fclose(wf);
 
   printf("weights loaded.\n");

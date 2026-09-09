@@ -12,47 +12,50 @@
  * by gen_drivers.py -- do not hand-edit.
  *
  * Shapes are not recoverable from this .ll's own (fully scalarized)
- * signature, so they were borrowed from sibling .mlir (./12_VGG19/mim_mlir_llvm/VGG19_mim_mlir.mlir),
- * matched positionally:
- * w1: shape [64, 3, 3, 3] (weight)
- * b1: shape [64] (bias)
+ * signature, so they were borrowed from sibling .mlir (./12_VGG19/mim_mlir_llvm/VGG19_mim_mlir.mlir)
+ * -- which is a file for THIS pipeline, so its argument order matches
+ * one-for-one what convert-func-to-llvm scalarized. Each weight's location
+ * in weights.bin is its byte offset from VGG19_params.json,
+ * looked up by canonical torch parameter name:
+ * w1: shape [64, 3, 3, 3] (weight) <- features.0.weight @ byte 0
+ * b1: shape [64] (bias) <- features.0.bias @ byte 6912
  * x: shape [10, 3, 224, 224] (input)
- * w2: shape [64, 64, 3, 3] (weight)
- * b2: shape [64] (bias)
- * w3: shape [128, 64, 3, 3] (weight)
- * b3: shape [128] (bias)
- * w4: shape [128, 128, 3, 3] (weight)
- * b4: shape [128] (bias)
- * w5: shape [256, 128, 3, 3] (weight)
- * b5: shape [256] (bias)
- * w6: shape [256, 256, 3, 3] (weight)
- * b6: shape [256] (bias)
- * w7: shape [256, 256, 3, 3] (weight)
- * b7: shape [256] (bias)
- * w8: shape [256, 256, 3, 3] (weight)
- * b8: shape [256] (bias)
- * w9: shape [512, 256, 3, 3] (weight)
- * b9: shape [512] (bias)
- * w10: shape [512, 512, 3, 3] (weight)
- * b10: shape [512] (bias)
- * w11: shape [512, 512, 3, 3] (weight)
- * b11: shape [512] (bias)
- * w12: shape [512, 512, 3, 3] (weight)
- * b12: shape [512] (bias)
- * w13: shape [512, 512, 3, 3] (weight)
- * b13: shape [512] (bias)
- * w14: shape [512, 512, 3, 3] (weight)
- * b14: shape [512] (bias)
- * w15: shape [512, 512, 3, 3] (weight)
- * b15: shape [512] (bias)
- * w16: shape [512, 512, 3, 3] (weight)
- * b16: shape [512] (bias)
- * w17: shape [4096, 25088] (weight)
- * b17: shape [4096] (bias)
- * w18: shape [4096, 4096] (weight)
- * b18: shape [4096] (bias)
- * w19: shape [1000, 4096] (weight)
- * b19: shape [1000] (bias)
+ * w2: shape [64, 64, 3, 3] (weight) <- features.2.weight @ byte 7168
+ * b2: shape [64] (bias) <- features.2.bias @ byte 154624
+ * w3: shape [128, 64, 3, 3] (weight) <- features.5.weight @ byte 154880
+ * b3: shape [128] (bias) <- features.5.bias @ byte 449792
+ * w4: shape [128, 128, 3, 3] (weight) <- features.7.weight @ byte 450304
+ * b4: shape [128] (bias) <- features.7.bias @ byte 1040128
+ * w5: shape [256, 128, 3, 3] (weight) <- features.10.weight @ byte 1040640
+ * b5: shape [256] (bias) <- features.10.bias @ byte 2220288
+ * w6: shape [256, 256, 3, 3] (weight) <- features.12.weight @ byte 2221312
+ * b6: shape [256] (bias) <- features.12.bias @ byte 4580608
+ * w7: shape [256, 256, 3, 3] (weight) <- features.14.weight @ byte 4581632
+ * b7: shape [256] (bias) <- features.14.bias @ byte 6940928
+ * w8: shape [256, 256, 3, 3] (weight) <- features.16.weight @ byte 6941952
+ * b8: shape [256] (bias) <- features.16.bias @ byte 9301248
+ * w9: shape [512, 256, 3, 3] (weight) <- features.19.weight @ byte 9302272
+ * b9: shape [512] (bias) <- features.19.bias @ byte 14020864
+ * w10: shape [512, 512, 3, 3] (weight) <- features.21.weight @ byte 14022912
+ * b10: shape [512] (bias) <- features.21.bias @ byte 23460096
+ * w11: shape [512, 512, 3, 3] (weight) <- features.23.weight @ byte 23462144
+ * b11: shape [512] (bias) <- features.23.bias @ byte 32899328
+ * w12: shape [512, 512, 3, 3] (weight) <- features.25.weight @ byte 32901376
+ * b12: shape [512] (bias) <- features.25.bias @ byte 42338560
+ * w13: shape [512, 512, 3, 3] (weight) <- features.28.weight @ byte 42340608
+ * b13: shape [512] (bias) <- features.28.bias @ byte 51777792
+ * w14: shape [512, 512, 3, 3] (weight) <- features.30.weight @ byte 51779840
+ * b14: shape [512] (bias) <- features.30.bias @ byte 61217024
+ * w15: shape [512, 512, 3, 3] (weight) <- features.32.weight @ byte 61219072
+ * b15: shape [512] (bias) <- features.32.bias @ byte 70656256
+ * w16: shape [512, 512, 3, 3] (weight) <- features.34.weight @ byte 70658304
+ * b16: shape [512] (bias) <- features.34.bias @ byte 80095488
+ * w17: shape [4096, 25088] (weight) <- classifier.0.weight @ byte 80097536
+ * b17: shape [4096] (bias) <- classifier.0.bias @ byte 491139328
+ * w18: shape [4096, 4096] (weight) <- classifier.3.weight @ byte 491155712
+ * b18: shape [4096] (bias) <- classifier.3.bias @ byte 558264576
+ * w19: shape [1000, 4096] (weight) <- classifier.6.weight @ byte 558280960
+ * b19: shape [1000] (bias) <- classifier.6.bias @ byte 574664960
  * output: shape [10, 1000]
  *
  * Usage: VGG19_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
@@ -426,6 +429,26 @@ static const size_t b18_count = 4096;
 static const size_t w19_count = 4096000;
 static const size_t b19_count = 1000;
 
+static float *read_floats_at(FILE *f, long byte_offset, size_t n,
+                             const char *what) {
+  float *p = (float *)malloc(n * sizeof(float));
+  if (!p) {
+    fprintf(stderr, "out of memory reading %s (%zu floats)\n", what, n);
+    exit(1);
+  }
+  if (fseek(f, byte_offset, SEEK_SET) != 0) {
+    fprintf(stderr, "seek to offset %ld for %s failed\n", byte_offset, what);
+    exit(1);
+  }
+  size_t got = fread(p, sizeof(float), n, f);
+  if (got != n) {
+    fprintf(stderr, "short read on %s at offset %ld: wanted %zu floats, got "
+                    "%zu\n", what, byte_offset, n, got);
+    exit(1);
+  }
+  return p;
+}
+
 static float *read_floats(FILE *f, size_t n, const char *what) {
   float *p = (float *)malloc(n * sizeof(float));
   if (!p) {
@@ -609,44 +632,44 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  float *w1 = read_floats(wf, w1_count, "w1");
-  float *b1 = read_floats(wf, b1_count, "b1");
-  float *w2 = read_floats(wf, w2_count, "w2");
-  float *b2 = read_floats(wf, b2_count, "b2");
-  float *w3 = read_floats(wf, w3_count, "w3");
-  float *b3 = read_floats(wf, b3_count, "b3");
-  float *w4 = read_floats(wf, w4_count, "w4");
-  float *b4 = read_floats(wf, b4_count, "b4");
-  float *w5 = read_floats(wf, w5_count, "w5");
-  float *b5 = read_floats(wf, b5_count, "b5");
-  float *w6 = read_floats(wf, w6_count, "w6");
-  float *b6 = read_floats(wf, b6_count, "b6");
-  float *w7 = read_floats(wf, w7_count, "w7");
-  float *b7 = read_floats(wf, b7_count, "b7");
-  float *w8 = read_floats(wf, w8_count, "w8");
-  float *b8 = read_floats(wf, b8_count, "b8");
-  float *w9 = read_floats(wf, w9_count, "w9");
-  float *b9 = read_floats(wf, b9_count, "b9");
-  float *w10 = read_floats(wf, w10_count, "w10");
-  float *b10 = read_floats(wf, b10_count, "b10");
-  float *w11 = read_floats(wf, w11_count, "w11");
-  float *b11 = read_floats(wf, b11_count, "b11");
-  float *w12 = read_floats(wf, w12_count, "w12");
-  float *b12 = read_floats(wf, b12_count, "b12");
-  float *w13 = read_floats(wf, w13_count, "w13");
-  float *b13 = read_floats(wf, b13_count, "b13");
-  float *w14 = read_floats(wf, w14_count, "w14");
-  float *b14 = read_floats(wf, b14_count, "b14");
-  float *w15 = read_floats(wf, w15_count, "w15");
-  float *b15 = read_floats(wf, b15_count, "b15");
-  float *w16 = read_floats(wf, w16_count, "w16");
-  float *b16 = read_floats(wf, b16_count, "b16");
-  float *w17 = read_floats(wf, w17_count, "w17");
-  float *b17 = read_floats(wf, b17_count, "b17");
-  float *w18 = read_floats(wf, w18_count, "w18");
-  float *b18 = read_floats(wf, b18_count, "b18");
-  float *w19 = read_floats(wf, w19_count, "w19");
-  float *b19 = read_floats(wf, b19_count, "b19");
+  float *w1 = read_floats_at(wf, 0, w1_count, "w1");
+  float *b1 = read_floats_at(wf, 6912, b1_count, "b1");
+  float *w2 = read_floats_at(wf, 7168, w2_count, "w2");
+  float *b2 = read_floats_at(wf, 154624, b2_count, "b2");
+  float *w3 = read_floats_at(wf, 154880, w3_count, "w3");
+  float *b3 = read_floats_at(wf, 449792, b3_count, "b3");
+  float *w4 = read_floats_at(wf, 450304, w4_count, "w4");
+  float *b4 = read_floats_at(wf, 1040128, b4_count, "b4");
+  float *w5 = read_floats_at(wf, 1040640, w5_count, "w5");
+  float *b5 = read_floats_at(wf, 2220288, b5_count, "b5");
+  float *w6 = read_floats_at(wf, 2221312, w6_count, "w6");
+  float *b6 = read_floats_at(wf, 4580608, b6_count, "b6");
+  float *w7 = read_floats_at(wf, 4581632, w7_count, "w7");
+  float *b7 = read_floats_at(wf, 6940928, b7_count, "b7");
+  float *w8 = read_floats_at(wf, 6941952, w8_count, "w8");
+  float *b8 = read_floats_at(wf, 9301248, b8_count, "b8");
+  float *w9 = read_floats_at(wf, 9302272, w9_count, "w9");
+  float *b9 = read_floats_at(wf, 14020864, b9_count, "b9");
+  float *w10 = read_floats_at(wf, 14022912, w10_count, "w10");
+  float *b10 = read_floats_at(wf, 23460096, b10_count, "b10");
+  float *w11 = read_floats_at(wf, 23462144, w11_count, "w11");
+  float *b11 = read_floats_at(wf, 32899328, b11_count, "b11");
+  float *w12 = read_floats_at(wf, 32901376, w12_count, "w12");
+  float *b12 = read_floats_at(wf, 42338560, b12_count, "b12");
+  float *w13 = read_floats_at(wf, 42340608, w13_count, "w13");
+  float *b13 = read_floats_at(wf, 51777792, b13_count, "b13");
+  float *w14 = read_floats_at(wf, 51779840, w14_count, "w14");
+  float *b14 = read_floats_at(wf, 61217024, b14_count, "b14");
+  float *w15 = read_floats_at(wf, 61219072, w15_count, "w15");
+  float *b15 = read_floats_at(wf, 70656256, b15_count, "b15");
+  float *w16 = read_floats_at(wf, 70658304, w16_count, "w16");
+  float *b16 = read_floats_at(wf, 80095488, b16_count, "b16");
+  float *w17 = read_floats_at(wf, 80097536, w17_count, "w17");
+  float *b17 = read_floats_at(wf, 491139328, b17_count, "b17");
+  float *w18 = read_floats_at(wf, 491155712, w18_count, "w18");
+  float *b18 = read_floats_at(wf, 558264576, b18_count, "b18");
+  float *w19 = read_floats_at(wf, 558280960, w19_count, "w19");
+  float *b19 = read_floats_at(wf, 574664960, b19_count, "b19");
   fclose(wf);
 
   printf("weights loaded.\n");

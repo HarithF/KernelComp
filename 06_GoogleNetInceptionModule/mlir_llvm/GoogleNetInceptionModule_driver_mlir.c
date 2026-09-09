@@ -12,21 +12,24 @@
  * by gen_drivers.py -- do not hand-edit.
  *
  * Shapes are not recoverable from this .ll's own (fully scalarized)
- * signature, so they were borrowed from sibling .mlir (./06_GoogleNetInceptionModule/mlir_llvm/GoogleNetInceptionModule_mlir.mlir),
- * matched positionally:
+ * signature, so they were borrowed from sibling .mlir (./06_GoogleNetInceptionModule/mlir_llvm/GoogleNetInceptionModule_mlir.mlir)
+ * -- which is a file for THIS pipeline, so its argument order matches
+ * one-for-one what convert-func-to-llvm scalarized. Each weight's location
+ * in weights.bin is its byte offset from GoogleNetInceptionModule_params.json,
+ * looked up by canonical torch parameter name:
  * x: shape [10, 480, 224, 224] (input)
- * w1: shape [192, 480, 1, 1] (weight)
- * b1: shape [192] (bias)
- * w2: shape [96, 480, 1, 1] (weight)
- * b2: shape [96] (bias)
- * w3: shape [208, 96, 3, 3] (weight)
- * b3: shape [208] (bias)
- * w4: shape [16, 480, 1, 1] (weight)
- * b4: shape [16] (bias)
- * w5: shape [48, 16, 5, 5] (weight)
- * b5: shape [48] (bias)
- * w6: shape [64, 480, 1, 1] (weight)
- * b6: shape [64] (bias)
+ * w1: shape [192, 480, 1, 1] (weight) <- branch1x1.weight @ byte 0
+ * b1: shape [192] (bias) <- branch1x1.bias @ byte 368640
+ * w2: shape [96, 480, 1, 1] (weight) <- branch3x3.0.weight @ byte 369408
+ * b2: shape [96] (bias) <- branch3x3.0.bias @ byte 553728
+ * w3: shape [208, 96, 3, 3] (weight) <- branch3x3.1.weight @ byte 554112
+ * b3: shape [208] (bias) <- branch3x3.1.bias @ byte 1272960
+ * w4: shape [16, 480, 1, 1] (weight) <- branch5x5.0.weight @ byte 1273792
+ * b4: shape [16] (bias) <- branch5x5.0.bias @ byte 1304512
+ * w5: shape [48, 16, 5, 5] (weight) <- branch5x5.1.weight @ byte 1304576
+ * b5: shape [48] (bias) <- branch5x5.1.bias @ byte 1381376
+ * w6: shape [64, 480, 1, 1] (weight) <- branch_pool.1.weight @ byte 1381568
+ * b6: shape [64] (bias) <- branch_pool.1.bias @ byte 1504448
  * output: shape [10, 512, 224, 224]
  *
  * Usage: GoogleNetInceptionModule_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
@@ -171,6 +174,26 @@ static const size_t w5_count = 19200;
 static const size_t b5_count = 48;
 static const size_t w6_count = 30720;
 static const size_t b6_count = 64;
+
+static float *read_floats_at(FILE *f, long byte_offset, size_t n,
+                             const char *what) {
+  float *p = (float *)malloc(n * sizeof(float));
+  if (!p) {
+    fprintf(stderr, "out of memory reading %s (%zu floats)\n", what, n);
+    exit(1);
+  }
+  if (fseek(f, byte_offset, SEEK_SET) != 0) {
+    fprintf(stderr, "seek to offset %ld for %s failed\n", byte_offset, what);
+    exit(1);
+  }
+  size_t got = fread(p, sizeof(float), n, f);
+  if (got != n) {
+    fprintf(stderr, "short read on %s at offset %ld: wanted %zu floats, got "
+                    "%zu\n", what, byte_offset, n, got);
+    exit(1);
+  }
+  return p;
+}
 
 static float *read_floats(FILE *f, size_t n, const char *what) {
   float *p = (float *)malloc(n * sizeof(float));
@@ -355,18 +378,18 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  float *w1 = read_floats(wf, w1_count, "w1");
-  float *b1 = read_floats(wf, b1_count, "b1");
-  float *w2 = read_floats(wf, w2_count, "w2");
-  float *b2 = read_floats(wf, b2_count, "b2");
-  float *w3 = read_floats(wf, w3_count, "w3");
-  float *b3 = read_floats(wf, b3_count, "b3");
-  float *w4 = read_floats(wf, w4_count, "w4");
-  float *b4 = read_floats(wf, b4_count, "b4");
-  float *w5 = read_floats(wf, w5_count, "w5");
-  float *b5 = read_floats(wf, b5_count, "b5");
-  float *w6 = read_floats(wf, w6_count, "w6");
-  float *b6 = read_floats(wf, b6_count, "b6");
+  float *w1 = read_floats_at(wf, 0, w1_count, "w1");
+  float *b1 = read_floats_at(wf, 368640, b1_count, "b1");
+  float *w2 = read_floats_at(wf, 369408, w2_count, "w2");
+  float *b2 = read_floats_at(wf, 553728, b2_count, "b2");
+  float *w3 = read_floats_at(wf, 554112, w3_count, "w3");
+  float *b3 = read_floats_at(wf, 1272960, b3_count, "b3");
+  float *w4 = read_floats_at(wf, 1273792, w4_count, "w4");
+  float *b4 = read_floats_at(wf, 1304512, b4_count, "b4");
+  float *w5 = read_floats_at(wf, 1304576, w5_count, "w5");
+  float *b5 = read_floats_at(wf, 1381376, b5_count, "b5");
+  float *w6 = read_floats_at(wf, 1381568, w6_count, "w6");
+  float *b6 = read_floats_at(wf, 1504448, b6_count, "b6");
   fclose(wf);
 
   printf("weights loaded.\n");

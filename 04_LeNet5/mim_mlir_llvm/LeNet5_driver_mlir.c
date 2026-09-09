@@ -12,19 +12,22 @@
  * by gen_drivers.py -- do not hand-edit.
  *
  * Shapes are not recoverable from this .ll's own (fully scalarized)
- * signature, so they were borrowed from sibling .mlir (./04_LeNet5/mim_mlir_llvm/LeNet5_mim_mlir.mlir),
- * matched positionally:
- * w1: shape [6, 5, 5] (weight)
- * b1: shape [6] (bias)
+ * signature, so they were borrowed from sibling .mlir (./04_LeNet5/mim_mlir_llvm/LeNet5_mim_mlir.mlir)
+ * -- which is a file for THIS pipeline, so its argument order matches
+ * one-for-one what convert-func-to-llvm scalarized. Each weight's location
+ * in weights.bin is its byte offset from LeNet5_params.json,
+ * looked up by canonical torch parameter name:
+ * w1: shape [6, 5, 5] (weight) <- conv1.weight @ byte 0
+ * b1: shape [6] (bias) <- conv1.bias @ byte 600
  * x: shape [4096, 32, 32] (input)
- * w2: shape [16, 6, 5, 5] (weight)
- * b2: shape [16] (bias)
- * w3: shape [120, 400] (weight)
- * b3: shape [120] (bias)
- * w4: shape [84, 120] (weight)
- * b4: shape [84] (bias)
- * w5: shape [20, 84] (weight)
- * b5: shape [20] (bias)
+ * w2: shape [16, 6, 5, 5] (weight) <- conv2.weight @ byte 624
+ * b2: shape [16] (bias) <- conv2.bias @ byte 10224
+ * w3: shape [120, 400] (weight) <- fc1.weight @ byte 10288
+ * b3: shape [120] (bias) <- fc1.bias @ byte 202288
+ * w4: shape [84, 120] (weight) <- fc2.weight @ byte 202768
+ * b4: shape [84] (bias) <- fc2.bias @ byte 243088
+ * w5: shape [20, 84] (weight) <- fc3.weight @ byte 243424
+ * b5: shape [20] (bias) <- fc3.bias @ byte 250144
  * output: shape [4096, 20]
  *
  * Usage: LeNet5_driver_mlir <weights> <input> <reps> <output> [run_id] [json_report]
@@ -147,6 +150,26 @@ static const size_t w4_count = 10080;
 static const size_t b4_count = 84;
 static const size_t w5_count = 1680;
 static const size_t b5_count = 20;
+
+static float *read_floats_at(FILE *f, long byte_offset, size_t n,
+                             const char *what) {
+  float *p = (float *)malloc(n * sizeof(float));
+  if (!p) {
+    fprintf(stderr, "out of memory reading %s (%zu floats)\n", what, n);
+    exit(1);
+  }
+  if (fseek(f, byte_offset, SEEK_SET) != 0) {
+    fprintf(stderr, "seek to offset %ld for %s failed\n", byte_offset, what);
+    exit(1);
+  }
+  size_t got = fread(p, sizeof(float), n, f);
+  if (got != n) {
+    fprintf(stderr, "short read on %s at offset %ld: wanted %zu floats, got "
+                    "%zu\n", what, byte_offset, n, got);
+    exit(1);
+  }
+  return p;
+}
 
 static float *read_floats(FILE *f, size_t n, const char *what) {
   float *p = (float *)malloc(n * sizeof(float));
@@ -331,16 +354,16 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  float *w1 = read_floats(wf, w1_count, "w1");
-  float *b1 = read_floats(wf, b1_count, "b1");
-  float *w2 = read_floats(wf, w2_count, "w2");
-  float *b2 = read_floats(wf, b2_count, "b2");
-  float *w3 = read_floats(wf, w3_count, "w3");
-  float *b3 = read_floats(wf, b3_count, "b3");
-  float *w4 = read_floats(wf, w4_count, "w4");
-  float *b4 = read_floats(wf, b4_count, "b4");
-  float *w5 = read_floats(wf, w5_count, "w5");
-  float *b5 = read_floats(wf, b5_count, "b5");
+  float *w1 = read_floats_at(wf, 0, w1_count, "w1");
+  float *b1 = read_floats_at(wf, 600, b1_count, "b1");
+  float *w2 = read_floats_at(wf, 624, w2_count, "w2");
+  float *b2 = read_floats_at(wf, 10224, b2_count, "b2");
+  float *w3 = read_floats_at(wf, 10288, w3_count, "w3");
+  float *b3 = read_floats_at(wf, 202288, b3_count, "b3");
+  float *w4 = read_floats_at(wf, 202768, w4_count, "w4");
+  float *b4 = read_floats_at(wf, 243088, b4_count, "b4");
+  float *w5 = read_floats_at(wf, 243424, w5_count, "w5");
+  float *b5 = read_floats_at(wf, 250144, b5_count, "b5");
   fclose(wf);
 
   printf("weights loaded.\n");
